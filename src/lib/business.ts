@@ -1,12 +1,12 @@
 export const business = {
-  name: "Houston Mosquito Control",
-  shortName: "HMC",
+  name: "Mosquito Maniacs",
+  shortName: "MM",
   city: "Houston, TX",
   phone: "(713) 555-0148",
-  email: "hello@houstonmosquitocontrol.example",
+  email: "hello@mosquitomaniacs.example",
   licenseLabel: "Texas Structural Pest Control license",
   licenseNumber: "Pending — replace with your TDA license number",
-  tagline: "Barrier mosquito spraying for homes, businesses, golf courses, and HOAs.",
+  tagline: "They Bite. We Fight.",
 } as const;
 
 export const propertyTypes = [

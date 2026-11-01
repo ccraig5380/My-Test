@@ -1,4 +1,4 @@
-import { ensureSchema, getSql } from "@/lib/db";
+import { getSql } from "@/lib/db";
 
 export async function GET() {
   if (!process.env.DATABASE_URL) {
@@ -9,7 +9,6 @@ export async function GET() {
   }
 
   try {
-    await ensureSchema();
     const sql = getSql();
     const rows = await sql`select 1 as connected`;
     return Response.json({

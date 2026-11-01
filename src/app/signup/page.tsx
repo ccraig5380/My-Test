@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { SignupForm } from "./signup-form";
 
 export const metadata: Metadata = { title: "Book service" };
@@ -11,7 +12,9 @@ export default function SignupPage() {
         Acreage is required. Under 5 acres subscribe online; the office puts
         you on the spray calendar. 5+ acres are quoted by staff.
       </p>
-      <SignupForm />
+      <Suspense>
+        <SignupForm />
+      </Suspense>
     </main>
   );
 }

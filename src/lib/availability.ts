@@ -3,7 +3,7 @@ import {
   visitMinutes,
   type PropertyTypeId,
 } from "@/lib/business";
-import { ensureSchema, getSql } from "@/lib/db";
+import { getSql } from "@/lib/db";
 
 export type Slot = { start: string; end: string };
 
@@ -17,7 +17,6 @@ function onHoustonDate(base: Date, weekday: number, minute: number) {
 }
 
 export async function listOpenSlots(band: Exclude<AcreageBandId, "5_plus">) {
-  await ensureSchema();
   const sql = getSql();
   const duration = visitMinutes[band];
   const rules = (await sql`

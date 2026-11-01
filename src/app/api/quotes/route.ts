@@ -1,5 +1,5 @@
 import { isCoveredZip } from "@/lib/business";
-import { ensureSchema, getSql } from "@/lib/db";
+import { getSql, logInteraction } from "@/lib/db";
 
 export async function POST(request: Request) {
   const body = (await request.json()) as Record<string, string>;
@@ -22,7 +22,6 @@ export async function POST(request: Request) {
     );
   }
 
-  await ensureSchema();
   const sql = getSql();
   await sql`
     insert into quote_requests (
@@ -32,6 +31,12 @@ export async function POST(request: Request) {
       ${acreageExact}, ${notes}
     )
   `;
+  await logInteraction({
+    actor: "customer",
+    action: "quote_request",
+    entityType: "quote_request",
+    summary: "5+ acre quote submitted",
+  });
 
   return Response.json({
     ok: true,

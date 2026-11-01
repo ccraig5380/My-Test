@@ -1,5 +1,5 @@
 import { isAdmin } from "@/lib/admin-auth";
-import { getSql } from "@/lib/db";
+import { getSql, logInteraction } from "@/lib/db";
 
 export async function POST(request: Request) {
   if (!(await isAdmin())) {
@@ -11,5 +11,12 @@ export async function POST(request: Request) {
   }
   const sql = getSql();
   await sql`update quote_requests set status = ${body.status} where id = ${body.id}`;
+  await logInteraction({
+    actor: "staff",
+    action: "quote_status",
+    entityType: "quote_request",
+    entityId: body.id,
+    summary: body.status,
+  });
   return Response.json({ ok: true });
 }

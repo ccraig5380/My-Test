@@ -1,5 +1,5 @@
 import { isAdmin } from "@/lib/admin-auth";
-import { getSql } from "@/lib/db";
+import { getSql, logInteraction } from "@/lib/db";
 
 export async function POST(request: Request) {
   if (!(await isAdmin())) {
@@ -22,5 +22,11 @@ export async function POST(request: Request) {
       ${body.maxJobsPerDay ?? 8}
     )
   `;
+  await logInteraction({
+    actor: "staff",
+    action: "driver_added",
+    entityType: "driver",
+    summary: body.name.trim(),
+  });
   return Response.json({ ok: true });
 }

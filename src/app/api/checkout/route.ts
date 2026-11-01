@@ -3,7 +3,7 @@ import {
   isCoveredZip,
   type PropertyTypeId,
 } from "@/lib/business";
-import { ensureSchema, getSql } from "@/lib/db";
+import { getSql, logInteraction } from "@/lib/db";
 import { getStripe, priceFor } from "@/lib/stripe";
 
 export async function POST(request: Request) {
@@ -33,7 +33,6 @@ export async function POST(request: Request) {
     );
   }
 
-  await ensureSchema();
   const sql = getSql();
   const origin = new URL(request.url).origin;
 
@@ -69,6 +68,13 @@ export async function POST(request: Request) {
       insert into jobs (customer_id, property_id, subscription_id, status)
       values (${customerId}, ${property[0].id}, ${sub[0].id}, 'needs_schedule')
     `;
+    await logInteraction({
+      actor: "customer",
+      action: "service_request",
+      entityType: "customer",
+      entityId: customerId,
+      summary: "Online service request (no Stripe)",
+    });
     return Response.json({ url: `${origin}/signup/success` });
   }
 

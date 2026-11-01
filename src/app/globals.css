@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --background: #121512;
-  --foreground: #f4f1ea;
-  --accent: #3d7a3a;
-  --accent-hover: #4a9450;
+  --background: #0b1220;
+  --foreground: #eef4ff;
+  --accent: #1d6fd8;
+  --accent-hover: #3b86ea;
 }
 
 @theme inline {
@@ -19,6 +19,12 @@ html,
 body {
   background: var(--background);
   color: var(--foreground);
+  min-height: 100%;
+  overflow-x: clip;
+}
+
+html {
+  overflow-y: scroll;
 }
 
 body {
@@ -27,4 +33,38 @@ body {
 
 a {
   color: inherit;
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+
+@keyframes reviews-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.reviews-marquee {
+  overflow-x: clip;
+  max-width: 100%;
+}
+
+.reviews-track {
+  animation: reviews-scroll 45s linear infinite;
+  pointer-events: none;
+}
+
+.reviews-marquee:hover .reviews-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reviews-track {
+    animation: none;
+  }
 }

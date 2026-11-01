@@ -14,7 +14,7 @@ export default function ServiceAreaPage() {
       </p>
       <ul className="grid grid-cols-3 gap-2 text-sm sm:grid-cols-6">
         {[...new Set(houstonZips)].sort().map((zip) => (
-          <li key={zip} className="font-mono text-zinc-700">
+            <li key={zip} className="font-mono text-zinc-300">
             {zip}
           </li>
         ))}

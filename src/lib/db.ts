@@ -1,5 +1,4 @@
 import { neon } from "@neondatabase/serverless";
-import { schemaStatements } from "@/lib/schema";
 
 export function getSql() {
   const databaseUrl = process.env.DATABASE_URL;
@@ -9,13 +8,22 @@ export function getSql() {
   return neon(databaseUrl);
 }
 
-let migrated = false;
-
-export async function ensureSchema() {
-  if (migrated) return;
+export async function logInteraction(input: {
+  actor: string;
+  action: string;
+  entityType: string;
+  entityId?: string | null;
+  summary?: string;
+}) {
   const sql = getSql();
-  for (const statement of schemaStatements) {
-    await sql.query(statement, []);
-  }
-  migrated = true;
+  await sql`
+    insert into interactions (actor, action, entity_type, entity_id, summary)
+    values (
+      ${input.actor},
+      ${input.action},
+      ${input.entityType},
+      ${input.entityId ?? null},
+      ${input.summary ?? null}
+    )
+  `;
 }

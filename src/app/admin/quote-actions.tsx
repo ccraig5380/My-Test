@@ -18,7 +18,7 @@ export function QuoteActions({ id }: { id: string }) {
         <button
           key={status}
           type="button"
-          className="text-green-400 underline"
+          className="text-sky-300 underline"
           onClick={() => setStatus(status)}
         >
           {status}

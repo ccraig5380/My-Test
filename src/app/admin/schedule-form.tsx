@@ -41,7 +41,7 @@ export function ScheduleForm({
       <select
         value={driverId}
         onChange={(e) => setDriverId(e.target.value)}
-        className="border border-white/20 bg-[#121512] px-2 py-1 text-sm"
+        className="border border-white/20 bg-[#0b1220] px-2 py-1 text-sm"
       >
         <option value="">Unassigned</option>
         {drivers.map((driver) => (

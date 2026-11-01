@@ -49,7 +49,7 @@ export function CustomerEdit({
       <button className="bg-[var(--accent)] px-3 py-1 text-sm font-semibold">
         Save
       </button>
-      {saved ? <span className="text-xs text-green-400">Saved</span> : null}
+      {saved ? <span className="text-xs text-sky-300">Saved</span> : null}
     </form>
   );
 }

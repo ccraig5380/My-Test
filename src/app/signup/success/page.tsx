@@ -11,7 +11,7 @@ export default function SuccessPage() {
         Online card billing is not live yet. The office will schedule the visit
         and collect payment until Stripe is connected.
       </p>
-      <Link href="/" className="mt-8 inline-block font-semibold text-green-400">
+      <Link href="/" className="mt-8 inline-block font-semibold text-sky-300">
         Back to home
       </Link>
     </main>

@@ -82,7 +82,7 @@ export function AccountClient() {
       {stripeId ? (
         <button
           type="button"
-          className="w-fit font-semibold text-green-400 underline"
+          className="w-fit font-semibold text-sky-300 underline"
           onClick={() => openPortal(stripeId)}
         >
           Manage card, pause, or cancel

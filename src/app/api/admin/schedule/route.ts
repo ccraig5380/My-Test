@@ -1,6 +1,6 @@
 import { isAdmin } from "@/lib/admin-auth";
 import { autoDispatchEnabled, autoSuggestDriver, zoneForZip } from "@/lib/dispatch";
-import { getSql } from "@/lib/db";
+import { getSql, logInteraction } from "@/lib/db";
 
 export async function POST(request: Request) {
   if (!(await isAdmin())) {
@@ -63,5 +63,12 @@ export async function POST(request: Request) {
         status = 'scheduled'
     where id = ${body.jobId}
   `;
+  await logInteraction({
+    actor: "staff",
+    action: "job_scheduled",
+    entityType: "job",
+    entityId: body.jobId,
+    summary: "Staff set visit time",
+  });
   return Response.json({ ok: true });
 }

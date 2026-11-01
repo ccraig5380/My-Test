@@ -1,4 +1,4 @@
-import { ensureSchema, getSql } from "@/lib/db";
+import { getSql, logInteraction } from "@/lib/db";
 import { getStripe } from "@/lib/stripe";
 import type Stripe from "stripe";
 
@@ -22,7 +22,6 @@ export async function POST(request: Request) {
     return Response.json({ error: "Invalid signature" }, { status: 400 });
   }
 
-  await ensureSchema();
   const sql = getSql();
 
   if (event.type === "checkout.session.completed") {
@@ -56,6 +55,13 @@ export async function POST(request: Request) {
           ${customerId}, ${propertyId}, ${sub[0].id}, 'needs_schedule'
         )
       `;
+      await logInteraction({
+        actor: "stripe",
+        action: "checkout_completed",
+        entityType: "customer",
+        entityId: customerId,
+        summary: "Stripe checkout completed",
+      });
     }
   }
 

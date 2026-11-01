@@ -1,12 +1,13 @@
 import { connection } from "next/server";
 import { isAdmin } from "@/lib/admin-auth";
-import { ensureSchema, getSql } from "@/lib/db";
+import { getSql } from "@/lib/db";
 import { CustomerEdit } from "./customer-edit";
 import { DriverForm } from "./driver-form";
 import { JobActions } from "./job-actions";
 import { AdminLoginForm } from "./login-form";
 import { LogoutButton } from "./logout-button";
 import { QuoteActions } from "./quote-actions";
+import { ReviewForm, ReviewRowActions } from "./review-form";
 import { ScheduleForm } from "./schedule-form";
 
 export const instant = false;
@@ -25,7 +26,6 @@ export default async function AdminPage() {
     );
   }
 
-  await ensureSchema();
   const sql = getSql();
   const quotes = (await sql`
     select id, name, email, phone, address_line, zip, property_type,
@@ -70,6 +70,18 @@ export default async function AdminPage() {
     order by j.starts_at asc
     limit 80
   `) as Record<string, string>[];
+  const interactions = (await sql`
+    select id, occurred_at, actor, action, entity_type, summary
+    from interactions
+    order by occurred_at desc
+    limit 50
+  `) as Record<string, string>[];
+  const reviews = (await sql`
+    select id, author_name, location, body, rating, published, created_at
+    from reviews
+    order by created_at desc
+    limit 50
+  `) as Record<string, string | boolean | number>[];
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-14 px-6 py-16">
@@ -82,6 +94,48 @@ export default async function AdminPage() {
         </div>
         <LogoutButton />
       </div>
+
+      <section>
+        <h2 className="mb-4 text-2xl font-semibold">Homepage reviews</h2>
+        <p className="mb-4 text-sm text-zinc-400">
+          Type reviews here. Published ones scroll on the home page. They live
+          in the Neon <code>reviews</code> table.
+        </p>
+        <ReviewForm />
+        <ul className="mt-6 space-y-3 text-sm">
+          {reviews.map((review) => (
+            <li
+              key={String(review.id)}
+              className="border border-white/10 px-4 py-3"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="font-semibold">
+                    {String(review.author_name)}
+                    {review.location ? (
+                      <span className="font-normal text-zinc-400">
+                        {" "}
+                        · {String(review.location)}
+                      </span>
+                    ) : null}
+                    <span className="ml-2 text-sky-300">
+                      {String(review.rating)}/5
+                    </span>
+                    {!review.published ? (
+                      <span className="ml-2 text-zinc-500">hidden</span>
+                    ) : null}
+                  </p>
+                  <p className="mt-2 text-zinc-200">{String(review.body)}</p>
+                </div>
+                <ReviewRowActions
+                  id={String(review.id)}
+                  published={Boolean(review.published)}
+                />
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <section>
         <h2 className="mb-4 text-2xl font-semibold">Customers</h2>
@@ -263,6 +317,25 @@ export default async function AdminPage() {
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section>
+        <h2 className="mb-4 text-2xl font-semibold">Interaction log</h2>
+        <p className="mb-3 text-sm text-zinc-400">
+          Same rows live in Neon table <code>interactions</code>. Open them in
+          the Neon console without using this site.
+        </p>
+        <ul className="space-y-2 text-sm">
+          {interactions.map((row) => (
+            <li key={row.id} className="border border-white/10 px-3 py-2">
+              {new Date(row.occurred_at).toLocaleString("en-US", {
+                timeZone: "America/Chicago",
+              })}{" "}
+              · {row.actor} · {row.action} · {row.entity_type}
+              {row.summary ? ` · ${row.summary}` : ""}
+            </li>
+          ))}
+        </ul>
       </section>
     </main>
   );

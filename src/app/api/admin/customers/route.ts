@@ -1,5 +1,5 @@
 import { isAdmin } from "@/lib/admin-auth";
-import { getSql } from "@/lib/db";
+import { getSql, logInteraction } from "@/lib/db";
 
 export async function POST(request: Request) {
   if (!(await isAdmin())) {
@@ -22,5 +22,12 @@ export async function POST(request: Request) {
         phone = coalesce(${body.phone ?? null}, phone)
     where id = ${body.id}
   `;
+  await logInteraction({
+    actor: "staff",
+    action: "customer_updated",
+    entityType: "customer",
+    entityId: body.id,
+    summary: "Staff edited customer record",
+  });
   return Response.json({ ok: true });
 }

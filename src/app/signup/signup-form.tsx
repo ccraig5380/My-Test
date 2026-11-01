@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   acreageBands,
   formatUsd,
@@ -11,21 +12,48 @@ import {
   type PropertyTypeId,
 } from "@/lib/business";
 
-const empty = {
-  propertyType: "" as PropertyTypeId | "",
-  acreageBand: "" as AcreageBandId | "",
-  acreageExact: "",
-  name: "",
-  email: "",
-  phone: "",
-  address: "",
-  zip: "",
-  notes: "",
-  preferredDays: "",
+function zipFromAddress(address: string) {
+  const match = address.match(/\b(\d{5})(?:-\d{4})?\b/);
+  return match?.[1] ?? "";
+}
+
+function isAcreageBand(value: string): value is AcreageBandId {
+  return acreageBands.some((band) => band.id === value);
+}
+
+type SignupFields = {
+  propertyType: PropertyTypeId | "";
+  acreageBand: AcreageBandId | "";
+  acreageExact: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+  zip: string;
+  notes: string;
+  preferredDays: string;
 };
 
 export function SignupForm() {
-  const [form, setForm] = useState(empty);
+  const params = useSearchParams();
+  const [form, setForm] = useState<SignupFields>(() => {
+    const address = params.get("address") ?? "";
+    const acreage = params.get("acreageBand") ?? "";
+    return {
+      propertyType: "",
+      acreageBand: isAcreageBand(acreage) ? acreage : "",
+      acreageExact: "",
+      firstName: params.get("firstName") ?? "",
+      lastName: params.get("lastName") ?? "",
+      email: "",
+      phone: "",
+      address,
+      zip: zipFromAddress(address),
+      notes: "",
+      preferredDays: "",
+    };
+  });
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -47,7 +75,7 @@ export function SignupForm() {
     return monthlyPricesCents[form.acreageBand][form.propertyType];
   }, [form.acreageBand, form.propertyType]);
 
-  function set<K extends keyof typeof empty>(key: K, value: (typeof empty)[K]) {
+  function set<K extends keyof SignupFields>(key: K, value: SignupFields[K]) {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
@@ -58,13 +86,15 @@ export function SignupForm() {
       setStatus("Choose a property type and acreage.");
       return;
     }
+    const name = `${form.firstName.trim()} ${form.lastName.trim()}`.trim();
+    const payload = { ...form, name };
     setBusy(true);
     try {
       if (quoteOnly) {
         const res = await fetch("/api/quotes", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
+          body: JSON.stringify(payload),
         });
         const data = (await res.json()) as { error?: string; message?: string };
         if (!res.ok) throw new Error(data.error ?? "Quote failed");
@@ -78,7 +108,7 @@ export function SignupForm() {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
       const data = (await res.json()) as { error?: string; url?: string };
       if (!res.ok) throw new Error(data.error ?? "Checkout failed");
@@ -113,26 +143,24 @@ export function SignupForm() {
         </div>
       </fieldset>
 
-      <fieldset className="flex flex-col gap-3">
-        <legend className="text-lg font-semibold">Acreage (required)</legend>
-        <div className="grid gap-2 sm:grid-cols-2">
+      <label className="flex flex-col gap-2">
+        <span className="text-lg font-semibold">Acreage (required)</span>
+        <select
+          required
+          value={form.acreageBand}
+          onChange={(e) => set("acreageBand", e.target.value as AcreageBandId)}
+          className="border border-white/20 bg-[#0b1220] px-3 py-2"
+        >
+          <option value="" disabled>
+            Select acreage
+          </option>
           {acreageBands.map((band) => (
-            <label
-              key={band.id}
-              className="flex cursor-pointer items-center gap-3 border border-white/15 px-4 py-3"
-            >
-              <input
-                type="radio"
-                name="acreageBand"
-                required
-                checked={form.acreageBand === band.id}
-                onChange={() => set("acreageBand", band.id)}
-              />
+            <option key={band.id} value={band.id}>
               {band.label}
-            </label>
+            </option>
           ))}
-        </div>
-      </fieldset>
+        </select>
+      </label>
 
       {quoteOnly ? (
         <label className="flex flex-col gap-2">
@@ -151,11 +179,22 @@ export function SignupForm() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="flex flex-col gap-2">
-          Name
+          First name
           <input
             required
-            value={form.name}
-            onChange={(e) => set("name", e.target.value)}
+            value={form.firstName}
+            onChange={(e) => set("firstName", e.target.value)}
+            autoComplete="given-name"
+            className="border border-white/20 bg-transparent px-3 py-2"
+          />
+        </label>
+        <label className="flex flex-col gap-2">
+          Last name
+          <input
+            required
+            value={form.lastName}
+            onChange={(e) => set("lastName", e.target.value)}
+            autoComplete="family-name"
             className="border border-white/20 bg-transparent px-3 py-2"
           />
         </label>

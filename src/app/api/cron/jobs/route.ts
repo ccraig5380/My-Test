@@ -1,4 +1,4 @@
-import { ensureSchema, getSql } from "@/lib/db";
+import { getSql } from "@/lib/db";
 
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
@@ -8,7 +8,6 @@ export async function GET(request: Request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  await ensureSchema();
   const sql = getSql();
   const subs = (await sql`
     select s.id, s.customer_id, s.property_id, p.acreage_band
