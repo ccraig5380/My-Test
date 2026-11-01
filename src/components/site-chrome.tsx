@@ -1,20 +1,17 @@
 import Link from "next/link";
 import { business } from "@/lib/business";
-import { HeaderSwarm } from "./header-swarm";
 
 const nav = [
   { href: "/services", label: "Services" },
-  { href: "/service-area", label: "Service area" },
+  { href: "/service-area", label: "Service Area" },
   { href: "/about", label: "About" },
 ];
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-20 overflow-x-clip border-b border-white/10 bg-[#0b1220]/92 backdrop-blur-sm">
-      <div className="relative isolate mx-auto max-w-6xl px-6 py-5">
-        <HeaderSwarm />
-        <div className="relative z-10 flex items-center justify-between gap-4">
-          <Link href="/" className="leading-tight text-white">
+    <header className="sticky top-0 z-20 border-b border-white/10 bg-[#0b1220]/95 backdrop-blur-sm">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
+        <Link href="/" className="leading-tight text-white">
             <span className="block text-lg font-semibold tracking-tight">
               {business.name}
             </span>
@@ -37,8 +34,7 @@ export function Header() {
             >
               Book now
             </Link>
-          </nav>
-        </div>
+        </nav>
       </div>
     </header>
   );

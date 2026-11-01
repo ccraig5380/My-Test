@@ -9,7 +9,9 @@ export default function AboutPage() {
       <h1 className="text-3xl font-semibold tracking-tight">About</h1>
       <p className="leading-7 text-zinc-300">
         {business.name} provides recurring mosquito barrier treatments in{" "}
-        {business.city}. {business.tagline}
+        {business.city}. No one is more diligent about protecting pollinators.
+        If mosquitoes still show up between services, we come back and spray
+        for free. {business.tagline}
       </p>
       <p className="text-sm text-zinc-300">
         {business.licenseLabel}: {business.licenseNumber}

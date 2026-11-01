@@ -21,6 +21,10 @@ function isAcreageBand(value: string): value is AcreageBandId {
   return acreageBands.some((band) => band.id === value);
 }
 
+function isPropertyType(value: string): value is PropertyTypeId {
+  return propertyTypes.some((type) => type.id === value);
+}
+
 type SignupFields = {
   propertyType: PropertyTypeId | "";
   acreageBand: AcreageBandId | "";
@@ -40,8 +44,9 @@ export function SignupForm() {
   const [form, setForm] = useState<SignupFields>(() => {
     const address = params.get("address") ?? "";
     const acreage = params.get("acreageBand") ?? "";
+    const type = params.get("propertyType") ?? "";
     return {
-      propertyType: "",
+      propertyType: isPropertyType(type) ? type : "",
       acreageBand: isAcreageBand(acreage) ? acreage : "",
       acreageExact: "",
       firstName: params.get("firstName") ?? "",

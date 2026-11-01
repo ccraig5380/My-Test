@@ -76,7 +76,7 @@ function spawn(
   height: number,
   fromEdge = false,
 ): Critter {
-  const size = kind === "bee" ? 22 + Math.random() * 8 : 26 + Math.random() * 8;
+  const size = kind === "bee" ? 36 + Math.random() * 14 : 40 + Math.random() * 16;
   const dir = Math.random() < 0.5 ? -1 : 1;
   const speed = 0.45 + Math.random() * 0.55;
   let x = Math.random() * Math.max(40, width - 40);
@@ -90,7 +90,7 @@ function spawn(
     size,
     bob: Math.random() * Math.PI * 2,
     bobSpeed: 0.04 + Math.random() * 0.05,
-    zapIn: kind === "mosquito" ? 1600 + Math.random() * 3200 : Infinity,
+    zapIn: kind === "mosquito" ? 5500 + Math.random() * 7500 : Infinity,
     zapping: 0,
     hidden: 0,
   };
@@ -161,6 +161,8 @@ export function HeaderSwarm() {
         spawn("mosquito", width, height),
         spawn("mosquito", width, height),
       ];
+      critters[5].hidden = 1800 + Math.random() * 4000;
+      critters[6].hidden = 4000 + Math.random() * 5000;
     };
 
     const tick = (now: number) => {
@@ -193,9 +195,9 @@ export function HeaderSwarm() {
         }
 
         const sprite = bug.kind === "bee" ? sprites.bee : sprites.mosquito;
-        const facingLeft = bug.vx < 0;
         const cx = bug.x + bug.size / 2;
         const cy = bug.y + bug.size / 2 + Math.sin(bug.bob) * 2;
+        const faceRight = bug.vx > 0;
 
         if (bug.zapping > 0) {
           drawZap(ctx, cx, cy, bug.size, bug.zapping);
@@ -208,7 +210,7 @@ export function HeaderSwarm() {
           ctx.restore();
           bug.zapping += 16;
           if (bug.zapping > 280) {
-            bug.hidden = 900 + Math.random() * 1200;
+            bug.hidden = 1600 + Math.random() * 3500;
             bug.zapping = 0;
           }
           continue;
@@ -216,7 +218,7 @@ export function HeaderSwarm() {
 
         ctx.save();
         ctx.translate(cx, cy);
-        if (facingLeft) ctx.scale(-1, 1);
+        if (faceRight) ctx.scale(-1, 1);
         ctx.rotate(Math.sin(bug.bob * 2) * 0.08);
         ctx.drawImage(sprite, -bug.size / 2, -bug.size / 2, bug.size, bug.size);
         ctx.restore();

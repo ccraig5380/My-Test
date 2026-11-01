@@ -10,11 +10,31 @@ export const business = {
 } as const;
 
 export const propertyTypes = [
-  { id: "residential", label: "Residential" },
-  { id: "commercial", label: "Commercial" },
-  { id: "golf", label: "Golf course" },
-  { id: "hoa", label: "HOA / community" },
-  { id: "other", label: "Other" },
+  {
+    id: "residential",
+    label: "Residential",
+    image: "/themes/residential.jpg",
+  },
+  {
+    id: "commercial",
+    label: "Commercial",
+    image: "/themes/commercial.jpg",
+  },
+  {
+    id: "golf",
+    label: "Golf Courses",
+    image: "/themes/golf.jpg",
+  },
+  {
+    id: "hoa",
+    label: "HOA/Communities",
+    image: "/themes/hoa.jpg",
+  },
+  {
+    id: "other",
+    label: "Acreage",
+    image: "/themes/acreage.jpg",
+  },
 ] as const;
 
 export type PropertyTypeId = (typeof propertyTypes)[number]["id"];

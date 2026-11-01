@@ -2,6 +2,7 @@ import { connection } from "next/server";
 import Link from "next/link";
 import { business, propertyTypes } from "@/lib/business";
 import { getSql } from "@/lib/db";
+import { HeaderSwarm } from "@/components/header-swarm";
 import { HomeLeadForm } from "./home-lead-form";
 import { ReviewsTicker } from "./reviews-ticker";
 
@@ -31,8 +32,11 @@ export default async function Home() {
 
   return (
     <main>
-      <section className="relative flex min-h-[88vh] flex-col justify-end bg-[radial-gradient(ellipse_at_top,_#1a4b8c_0%,_#0b1220_55%,_#07101c_100%)] px-6 pb-20 pt-32">
-        <div className="mx-auto w-full max-w-6xl">
+      <section className="relative flex min-h-[88vh] flex-col bg-[radial-gradient(ellipse_at_top,_#1a4b8c_0%,_#0b1220_55%,_#07101c_100%)] pb-20">
+        <div className="relative h-40 w-full shrink-0 overflow-x-clip sm:h-52">
+          <HeaderSwarm />
+        </div>
+        <div className="mx-auto w-full max-w-6xl px-6">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-sky-200/80">
             {business.name} · {business.city}
           </p>
@@ -40,9 +44,31 @@ export default async function Home() {
             {business.tagline}
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-200">
-            Barrier mosquito spraying for homes, businesses, golf courses, and
-            HOAs. Tell us who you are and your acreage — we take it from there.
+            No one is more diligent about protecting pollinators than Mosquito
+            Maniacs. And if mosquitoes still show up between services, we come
+            back and spray for free — that is our No Bite Guarantee.
           </p>
+          <ul className="mt-8 flex max-w-2xl flex-col gap-3 text-base font-medium tracking-wide text-sky-100">
+            {[
+              { prefix: "", strong: "NO BITE", suffix: " Guarantee" },
+              { prefix: "EPA ", strong: "Approved", suffix: "" },
+              { prefix: "", strong: "Safe", suffix: " for pets and livestock" },
+              { prefix: "", strong: "Licensed", suffix: " technicians" },
+            ].map((item) => (
+              <li key={item.strong} className="flex items-center gap-3">
+                <img
+                  src="/brand/mosquito-bullet.png"
+                  alt=""
+                  className="h-10 w-10 shrink-0 object-contain"
+                />
+                <span>
+                  {item.prefix}
+                  <strong className="font-bold text-sky-200">{item.strong}</strong>
+                  {item.suffix}
+                </span>
+              </li>
+            ))}
+          </ul>
           <HomeLeadForm />
         </div>
       </section>
@@ -51,13 +77,17 @@ export default async function Home() {
         {propertyTypes.map((type) => (
           <Link
             key={type.id}
-            href="/signup"
-            className="border border-white/10 bg-white/5 p-8 hover:border-sky-500/60"
+            href={`/signup?propertyType=${type.id}`}
+            className="group relative min-h-56 overflow-hidden border border-white/10 bg-cover bg-center p-8 text-white"
+            style={{ backgroundImage: `url(${type.image})` }}
           >
-            <h2 className="text-2xl font-semibold text-white">{type.label}</h2>
-            <p className="mt-3 text-sm leading-6 text-zinc-300">
-              Under 5 acres books online. 5+ acres go to a staff quote.
-            </p>
+            <span className="absolute inset-0 bg-[#07101c]/55 transition-colors group-hover:bg-[#07101c]/35" />
+            <span className="relative z-10 block">
+              <h2 className="text-2xl font-semibold">{type.label}</h2>
+              <p className="mt-3 text-sm leading-6 text-zinc-100">
+                Under 5 acres books online. 5+ acres go to a staff quote.
+              </p>
+            </span>
           </Link>
         ))}
       </section>

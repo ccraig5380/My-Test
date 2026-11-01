@@ -68,3 +68,22 @@ input[type="checkbox"] {
     animation: none;
   }
 }
+
+.service-map-label {
+  background: none;
+  border: none;
+}
+
+.service-map-label span {
+  color: #eef4ff;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 4px #0b1220;
+  white-space: nowrap;
+}
+
+.leaflet-container {
+  background: #0b1220;
+  font-family: inherit;
+}
