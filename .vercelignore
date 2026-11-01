@@ -1,0 +1,6 @@
+.env*
+.env.local
+.env.local.txt
+.vercel
+node_modules
+.next
