@@ -1,31 +1,51 @@
-import { DbStatus } from "./db-status";
+import Link from "next/link";
+import { business, propertyTypes } from "@/lib/business";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex w-full max-w-2xl flex-col gap-8 px-8 py-24">
-        <div className="flex flex-col gap-3">
-          <p className="text-sm font-medium uppercase tracking-wide text-zinc-500">
-            Rollout
+    <main>
+      <section className="relative flex min-h-[88vh] flex-col justify-end bg-[radial-gradient(ellipse_at_top,_#2a4a28_0%,_#121512_55%,_#0c0e0c_100%)] px-6 pb-20 pt-32">
+        <div className="mx-auto w-full max-w-6xl">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-green-200/80">
+            {business.city} mosquito barrier spraying
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight text-black dark:text-zinc-50">
-            My Test
+          <h1 className="mt-4 max-w-4xl text-5xl font-semibold leading-tight tracking-tight text-white sm:text-6xl">
+            Keep yards, clubs, and HOAs from becoming mosquito ground.
           </h1>
-          <p className="text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Next.js app hosted on Vercel, source in Git, Postgres on Neon.
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-200">
+            {business.tagline} Pick your acreage, grab a first visit, and we
+            come back on a monthly route.
           </p>
-          <DbStatus />
+          <div className="mt-8 flex flex-wrap gap-4">
+            <Link
+              href="/signup"
+              className="rounded-sm bg-[var(--accent)] px-8 py-4 text-base font-semibold text-white hover:bg-[var(--accent-hover)]"
+            >
+              Book now
+            </Link>
+            <Link
+              href="/services"
+              className="rounded-sm border border-white/30 px-8 py-4 text-base font-semibold text-white"
+            >
+              See plans
+            </Link>
+          </div>
         </div>
-        <ol className="list-decimal space-y-3 pl-5 text-zinc-700 dark:text-zinc-300">
-          <li>Create a Neon project and copy the pooled connection string.</li>
-          <li>
-            Put it in <code className="font-mono text-sm">.env.local</code> as{" "}
-            <code className="font-mono text-sm">DATABASE_URL</code>.
-          </li>
-          <li>Push this repo and import it on Vercel.</li>
-          <li>Set the same env var in Vercel Production and Preview.</li>
-        </ol>
-      </main>
-    </div>
+      </section>
+      <section className="mx-auto grid w-full max-w-6xl gap-4 px-6 py-20 sm:grid-cols-2 lg:grid-cols-3">
+        {propertyTypes.map((type) => (
+          <Link
+            key={type.id}
+            href="/signup"
+            className="border border-white/10 bg-white/5 p-8 hover:border-green-700/60"
+          >
+            <h2 className="text-2xl font-semibold text-white">{type.label}</h2>
+            <p className="mt-3 text-sm leading-6 text-zinc-300">
+              Under 5 acres books online. 5+ acres go to a staff quote.
+            </p>
+          </Link>
+        ))}
+      </section>
+    </main>
   );
 }
