@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
 type Review = {
   id: string;
   author_name: string;
@@ -7,8 +11,25 @@ type Review = {
 };
 
 export function ReviewsTicker({ reviews }: { reviews: Review[] }) {
+  const trackRef = useRef<HTMLUListElement>(null);
+  const [copies, setCopies] = useState(2);
+  const [duration, setDuration] = useState(45);
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track || reviews.length === 0) return;
+    const setWidth = track.scrollWidth / copies;
+    const viewport = track.parentElement?.clientWidth ?? 1200;
+    const needed = Math.max(2, Math.ceil((viewport * 2) / Math.max(setWidth, 1)));
+    if (needed !== copies) {
+      setCopies(needed);
+      return;
+    }
+    setDuration(45 * (copies / 2));
+  }, [copies, reviews]);
+
   if (reviews.length === 0) return null;
-  const loop = [...reviews, ...reviews];
+  const loop = Array.from({ length: copies }, () => reviews).flat();
 
   return (
     <section className="border-y border-white/10 bg-[#162338] py-10">
@@ -18,17 +39,26 @@ export function ReviewsTicker({ reviews }: { reviews: Review[] }) {
         </h2>
       </div>
       <div className="reviews-marquee overflow-x-clip">
-        <ul className="reviews-track flex w-max gap-4 px-4">
+        <ul
+          ref={trackRef}
+          className="reviews-track flex w-max gap-4 px-4"
+          style={{ animationDuration: `${duration}s` }}
+        >
           {loop.map((review, index) => (
             <li
               key={`${review.id}-${index}`}
               className="w-80 shrink-0 border border-white/10 bg-white/5 p-5"
             >
-              <p className="text-sky-300" aria-label={`${Number(review.rating)} out of 5 stars`}>
+              <p
+                className="text-sky-300"
+                aria-label={`${Number(review.rating)} out of 5 stars`}
+              >
                 {"★".repeat(Number(review.rating))}
                 {"☆".repeat(5 - Number(review.rating))}
               </p>
-              <p className="mt-3 text-sm leading-6 text-zinc-100">“{review.body}”</p>
+              <p className="mt-3 text-sm leading-6 text-zinc-100">
+                “{review.body}”
+              </p>
               <p className="mt-4 text-sm font-semibold text-white">
                 {review.author_name}
                 {review.location ? (

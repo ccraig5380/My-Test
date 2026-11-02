@@ -70,6 +70,22 @@ function loadImage(src: string) {
   });
 }
 
+function tuneMosquito(bug: Critter, width: number, preferredMs?: number) {
+  const speed = Math.abs(bug.vx) || 0.4;
+  let dir = Math.sign(bug.vx) || 1;
+  const cx = bug.x + bug.size / 2;
+  let remaining = dir > 0 ? width - cx : cx;
+  if (remaining < width * 0.3) {
+    dir *= -1;
+    remaining = dir > 0 ? width - cx : cx;
+  }
+  bug.vx = dir * speed;
+  const travelMs = (remaining / speed) * 16;
+  const alongPath = travelMs * (0.5 + Math.random() * 0.35);
+  const chosen = preferredMs ?? 6000 + Math.random() * 10000;
+  bug.zapIn = Math.min(Math.max(chosen, 5000), alongPath, 18000);
+}
+
 function spawn(
   kind: Critter["kind"],
   width: number,
@@ -78,22 +94,24 @@ function spawn(
 ): Critter {
   const size = kind === "bee" ? 34 + Math.random() * 10 : 36 + Math.random() * 12;
   const dir = Math.random() < 0.5 ? -1 : 1;
-  const speed = 0.45 + Math.random() * 0.55;
+  const speed = 0.36 + Math.random() * 0.4;
   let x = Math.random() * Math.max(40, width - 40);
   if (fromEdge) x = dir > 0 ? -size : width + size;
-  return {
+  const bug: Critter = {
     kind,
     x,
     y: 4 + Math.random() * Math.max(4, height - size - 6),
     vx: dir * speed,
-    vy: (Math.random() - 0.5) * 0.35,
+    vy: (Math.random() - 0.5) * 0.28,
     size,
     bob: Math.random() * Math.PI * 2,
-    bobSpeed: 0.04 + Math.random() * 0.05,
-    zapIn: kind === "mosquito" ? 5500 + Math.random() * 7500 : Infinity,
+    bobSpeed: 0.035 + Math.random() * 0.04,
+    zapIn: Infinity,
     zapping: 0,
     hidden: 0,
   };
+  if (kind === "mosquito") tuneMosquito(bug, width);
+  return bug;
 }
 
 function drawZap(
@@ -138,6 +156,9 @@ export function HeaderSwarm() {
     let sprites: { bee: HTMLCanvasElement; mosquito: HTMLCanvasElement } | null =
       null;
     let critters: Critter[] = [];
+    let intro: Critter | null = null;
+    let startedAt = 0;
+    let introZapped = false;
 
     const resize = () => {
       const parent = canvas.parentElement;
@@ -161,8 +182,23 @@ export function HeaderSwarm() {
         spawn("mosquito", width, height),
         spawn("mosquito", width, height),
       ];
-      critters[5].hidden = 1800 + Math.random() * 4000;
-      critters[6].hidden = 4000 + Math.random() * 5000;
+      const delays = [5000, 8500, 12000, 17000];
+      [3, 4, 5, 6].forEach((index, i) => {
+        tuneMosquito(critters[index], width, delays[i] + Math.random() * 900);
+      });
+      intro = spawn("mosquito", width, height);
+      intro.size = Math.min(48, Math.max(36, height * 0.55));
+      const dir = Math.random() < 0.5 ? -1 : 1;
+      intro.x =
+        width / 2 -
+        intro.size / 2 +
+        (Math.random() - 0.5) * width * 0.28;
+      intro.y = Math.max(2, height / 2 - intro.size / 2 + (Math.random() - 0.5) * 8);
+      intro.vx = dir * (0.4 + Math.random() * 0.22);
+      intro.vy = (Math.random() - 0.5) * 0.32;
+      intro.bobSpeed = 0.045 + Math.random() * 0.03;
+      intro.zapIn = Infinity;
+      critters.push(intro);
     };
 
     const tick = (now: number) => {
@@ -171,6 +207,17 @@ export function HeaderSwarm() {
       if (!parent) return;
       const width = parent.clientWidth;
       const height = parent.clientHeight;
+      if (!startedAt) startedAt = now;
+      if (
+        intro &&
+        !introZapped &&
+        intro.hidden <= 0 &&
+        intro.zapping <= 0 &&
+        now - startedAt >= 1000
+      ) {
+        intro.zapping = 1;
+        introZapped = true;
+      }
       ctx.clearRect(0, 0, width, height);
 
       for (const bug of critters) {
@@ -186,12 +233,18 @@ export function HeaderSwarm() {
         bug.x += bug.vx;
         bug.y += bug.vy + Math.sin(bug.bob) * 0.2;
         if (bug.y < 2 || bug.y > height - bug.size - 2) bug.vy *= -1;
-        if (bug.x < -bug.size - 8) bug.x = width + bug.size;
-        if (bug.x > width + bug.size + 8) bug.x = -bug.size;
-
-        if (bug.kind === "mosquito" && bug.zapping <= 0) {
+        if (bug.kind === "bee") {
+          if (bug.x < -bug.size - 8) bug.x = width + bug.size;
+          if (bug.x > width + bug.size + 8) bug.x = -bug.size;
+        } else if (bug.zapping <= 0) {
           bug.zapIn -= 16;
-          if (bug.zapIn <= 0) bug.zapping = 1;
+          if (
+            bug.zapIn <= 0 ||
+            bug.x < -bug.size - 8 ||
+            bug.x > width + bug.size + 8
+          ) {
+            bug.zapping = 1;
+          }
         }
 
         const sprite = bug.kind === "bee" ? sprites.bee : sprites.mosquito;

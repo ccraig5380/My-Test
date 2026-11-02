@@ -43,33 +43,37 @@ export default async function Home() {
           <h1 className="mt-4 max-w-4xl text-5xl font-semibold leading-tight tracking-tight text-white sm:text-7xl">
             {business.tagline}
           </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-200">
-            No one is more diligent about protecting pollinators than Mosquito
-            Maniacs. And if mosquitoes still show up between services, we come
-            back and spray for free — that is our No Bite Guarantee.
-          </p>
-          <div className="mt-8 grid w-full items-start gap-8 lg:grid-cols-2 lg:gap-12 xl:gap-16">
-            <ul className="flex max-w-2xl flex-col gap-3 text-base font-medium tracking-wide text-sky-100">
-              {[
-                { prefix: "", strong: "Safe", suffix: " For Pets And Livestock" },
-                { prefix: "", strong: "No Bite", suffix: " Guarantee" },
-                { prefix: "EPA ", strong: "Approved", suffix: "" },
-                { prefix: "", strong: "Licensed", suffix: " Technicians" },
-              ].map((item) => (
-                <li key={item.strong} className="flex items-center gap-3">
-                  <img
-                    src="/brand/mosquito-bullet.png"
-                    alt=""
-                    className="h-10 w-10 shrink-0 object-contain"
-                  />
-                  <span>
-                    {item.prefix}
-                    <strong className="font-bold text-sky-200">{item.strong}</strong>
-                    {item.suffix}
-                  </span>
-                </li>
-              ))}
-            </ul>
+          <div className="mt-6 grid w-full items-start gap-8 lg:grid-cols-2 lg:gap-12 xl:gap-16">
+            <div>
+              <h2 className="max-w-2xl text-2xl font-semibold leading-snug tracking-tight text-[#82D44A] sm:text-3xl">
+                No One Is More Diligent About Protecting Pollinators
+              </h2>
+              <p className="mt-4 max-w-2xl text-lg leading-8 text-zinc-200">
+                If mosquitoes still show up between services, we come back and
+                spray for free — that is our No Bite Guarantee.
+              </p>
+              <ul className="mt-8 flex max-w-2xl flex-col gap-3 text-xl font-medium tracking-wide text-sky-100">
+                {[
+                  { prefix: "", strong: "Safe", suffix: " For Pets And Livestock" },
+                  { prefix: "", strong: "No Bite", suffix: " Guarantee" },
+                  { prefix: "EPA ", strong: "Approved", suffix: "" },
+                  { prefix: "", strong: "Licensed", suffix: " Technicians" },
+                ].map((item) => (
+                  <li key={item.strong} className="flex items-center gap-3">
+                    <img
+                      src="/brand/mosquito-bullet.png"
+                      alt=""
+                      className="h-10 w-10 shrink-0 object-contain"
+                    />
+                    <span>
+                      {item.prefix}
+                      <strong className="font-bold text-sky-200">{item.strong}</strong>
+                      {item.suffix}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
             <HomeLeadForm />
           </div>
         </div>
@@ -86,14 +90,30 @@ export default async function Home() {
             {column.map((id) => {
               const type = propertyTypes.find((item) => item.id === id);
               if (!type) return null;
+              const liftPhoto =
+                type.id === "residential" ||
+                type.id === "commercial" ||
+                type.id === "hoa";
               return (
                 <Link
                   key={type.id}
                   href={`/signup?propertyType=${type.id}`}
-                  className="group relative min-h-56 overflow-hidden border border-white/10 bg-cover bg-center p-8 text-white"
-                  style={{ backgroundImage: `url(${type.image})` }}
+                  className="group relative min-h-56 overflow-hidden border border-white/10 p-8 text-white"
                 >
-                  <span className="absolute inset-0 bg-[#07101c]/55 transition-colors group-hover:bg-[#07101c]/35" />
+                  <span
+                    aria-hidden
+                    className={`absolute inset-0 bg-cover bg-center ${
+                      liftPhoto ? "brightness-[1.18] contrast-[1.04]" : ""
+                    }`}
+                    style={{ backgroundImage: `url(${type.image})` }}
+                  />
+                  <span
+                    className={`absolute inset-0 transition-colors ${
+                      liftPhoto
+                        ? "bg-[#07101c]/42 group-hover:bg-[#07101c]/26"
+                        : "bg-[#07101c]/55 group-hover:bg-[#07101c]/35"
+                    }`}
+                  />
                   <span className="relative z-10 block">
                     <h2 className="text-2xl font-semibold">{type.label}</h2>
                     <p className="mt-3 text-sm leading-6 text-zinc-100">

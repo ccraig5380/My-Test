@@ -12,7 +12,7 @@ export function Header() {
     <header className="sticky top-0 z-20 border-b border-white/10 bg-[#1c2840]/95 backdrop-blur-sm">
       <div className="mx-auto flex w-full items-center justify-between gap-4 px-6 py-4 lg:px-12 xl:px-16">
         <Link href="/" className="leading-tight text-white">
-          <span className="block text-xl font-semibold tracking-tight sm:text-2xl">
+          <span className="block font-display text-xl font-semibold tracking-tight sm:text-2xl">
             {business.name}
           </span>
           <span className="block text-sm uppercase tracking-[0.16em] text-sky-200/80">

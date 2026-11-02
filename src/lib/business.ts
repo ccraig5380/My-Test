@@ -45,10 +45,10 @@ export const propertyTypes = [
 export type PropertyTypeId = (typeof propertyTypes)[number]["id"];
 
 export const acreageBands = [
-  { id: "0_0_5", label: "0–0.5 acres", min: 0, max: 0.5, quoteOnly: false },
-  { id: "0_5_1", label: "0.5–1 acre", min: 0.5, max: 1, quoteOnly: false },
-  { id: "1_5", label: "1–5 acres", min: 1, max: 5, quoteOnly: false },
-  { id: "5_plus", label: "5+ acres", min: 5, max: null, quoteOnly: true },
+  { id: "0_0_5", label: "0–0.5 Acres", min: 0, max: 0.5, quoteOnly: false },
+  { id: "0_5_1", label: "0.5–1 Acre", min: 0.5, max: 1, quoteOnly: false },
+  { id: "1_5", label: "1–5 Acres", min: 1, max: 5, quoteOnly: false },
+  { id: "5_plus", label: "5+ Acres", min: 5, max: null, quoteOnly: true },
 ] as const;
 
 export type AcreageBandId = (typeof acreageBands)[number]["id"];

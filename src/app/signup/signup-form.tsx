@@ -149,7 +149,7 @@ export function SignupForm() {
       </fieldset>
 
       <label className="flex flex-col gap-2">
-        <span className="text-lg font-semibold">Acreage (required)</span>
+        <span className="text-lg font-semibold">Lot Size (required)</span>
         <select
           required
           value={form.acreageBand}
@@ -157,7 +157,7 @@ export function SignupForm() {
           className="border border-white/20 bg-[#0b1220] px-3 py-2"
         >
           <option value="" disabled>
-            Select acreage
+            Select Lot Size
           </option>
           {acreageBands.map((band) => (
             <option key={band.id} value={band.id}>

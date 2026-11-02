@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, Outfit } from "next/font/google";
 import { Footer, Header } from "@/components/site-chrome";
 import { business } from "@/lib/business";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
   subsets: ["latin"],
+  axes: ["SOFT", "WONK"],
 });
 
 export const metadata: Metadata = {
@@ -26,9 +27,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      className={`${outfit.variable} ${fraunces.variable} antialiased`}
     >
-      <body className="min-h-dvh flex flex-col bg-[var(--background)] text-[var(--foreground)]">
+      <body className="min-h-dvh flex flex-col bg-[var(--background)] font-sans text-[var(--foreground)]">
         <Header />
         {children}
         <Footer />

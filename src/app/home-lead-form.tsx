@@ -28,7 +28,7 @@ export function HomeLeadForm() {
       className="grid w-full gap-3 rounded-sm border border-white/15 bg-[#1c2840]/80 p-5 backdrop-blur-sm sm:grid-cols-2 lg:p-8"
     >
       <h2 className="sm:col-span-2 mb-1 text-2xl font-semibold tracking-tight text-white">
-        Check Your Pricing
+        Check Your Pricing And Book Service
       </h2>
       <label className="flex flex-col gap-1 text-sm">
         First name
@@ -61,7 +61,7 @@ export function HomeLeadForm() {
         />
       </label>
       <label className="flex flex-col gap-1 text-sm sm:col-span-2">
-        Acreage
+        Lot Size
         <select
           required
           value={acreageBand}
@@ -69,7 +69,7 @@ export function HomeLeadForm() {
           className="border border-white/25 bg-[#1c2840] px-3 py-2 text-base text-white"
         >
           <option value="" disabled>
-            Select acreage
+            Select Lot Size
           </option>
           {acreageBands.map((band) => (
             <option key={band.id} value={band.id}>
