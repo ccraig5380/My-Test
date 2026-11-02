@@ -1,6 +1,6 @@
 import { connection } from "next/server";
 import Link from "next/link";
-import { business, propertyTypes } from "@/lib/business";
+import { business, propertyTypes, type PropertyTypeId } from "@/lib/business";
 import { getSql } from "@/lib/db";
 import { HeaderSwarm } from "@/components/header-swarm";
 import { HomeLeadForm } from "./home-lead-form";
@@ -32,7 +32,7 @@ export default async function Home() {
 
   return (
     <main>
-      <section className="relative flex min-h-[88vh] flex-col bg-[radial-gradient(ellipse_at_top,_#1a4b8c_0%,_#0b1220_55%,_#07101c_100%)] pb-20">
+      <section className="relative flex min-h-[88vh] flex-col bg-[radial-gradient(ellipse_at_top,_#2d6fc0_0%,_#1c2840_55%,_#162338_100%)] pb-20">
         <div className="relative h-20 w-full shrink-0 overflow-hidden sm:h-24">
           <HeaderSwarm />
         </div>
@@ -48,47 +48,64 @@ export default async function Home() {
             Maniacs. And if mosquitoes still show up between services, we come
             back and spray for free — that is our No Bite Guarantee.
           </p>
-          <ul className="mt-8 flex max-w-2xl flex-col gap-3 text-base font-medium tracking-wide text-sky-100">
-            {[
-              { prefix: "", strong: "Safe", suffix: " For Pets And Livestock" },
-              { prefix: "", strong: "No Bite", suffix: " Guarantee" },
-              { prefix: "EPA ", strong: "Approved", suffix: "" },
-              { prefix: "", strong: "Licensed", suffix: " Technicians" },
-            ].map((item) => (
-              <li key={item.strong} className="flex items-center gap-3">
-                <img
-                  src="/brand/mosquito-bullet.png"
-                  alt=""
-                  className="h-10 w-10 shrink-0 object-contain"
-                />
-                <span>
-                  {item.prefix}
-                  <strong className="font-bold text-sky-200">{item.strong}</strong>
-                  {item.suffix}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <HomeLeadForm />
+          <div className="mt-8 grid w-full items-start gap-8 lg:grid-cols-2 lg:gap-12 xl:gap-16">
+            <ul className="flex max-w-2xl flex-col gap-3 text-base font-medium tracking-wide text-sky-100">
+              {[
+                { prefix: "", strong: "Safe", suffix: " For Pets And Livestock" },
+                { prefix: "", strong: "No Bite", suffix: " Guarantee" },
+                { prefix: "EPA ", strong: "Approved", suffix: "" },
+                { prefix: "", strong: "Licensed", suffix: " Technicians" },
+              ].map((item) => (
+                <li key={item.strong} className="flex items-center gap-3">
+                  <img
+                    src="/brand/mosquito-bullet.png"
+                    alt=""
+                    className="h-10 w-10 shrink-0 object-contain"
+                  />
+                  <span>
+                    {item.prefix}
+                    <strong className="font-bold text-sky-200">{item.strong}</strong>
+                    {item.suffix}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <HomeLeadForm />
+          </div>
         </div>
       </section>
       <ReviewsTicker reviews={reviews} />
-      <section className="mx-auto grid w-full gap-4 px-6 py-20 sm:grid-cols-2 lg:grid-cols-3 lg:px-12 xl:px-16">
-        {propertyTypes.map((type) => (
-          <Link
-            key={type.id}
-            href={`/signup?propertyType=${type.id}`}
-            className="group relative min-h-56 overflow-hidden border border-white/10 bg-cover bg-center p-8 text-white"
-            style={{ backgroundImage: `url(${type.image})` }}
-          >
-            <span className="absolute inset-0 bg-[#07101c]/55 transition-colors group-hover:bg-[#07101c]/35" />
-            <span className="relative z-10 block">
-              <h2 className="text-2xl font-semibold">{type.label}</h2>
-              <p className="mt-3 text-sm leading-6 text-zinc-100">
-                Under 5 acres books online. 5+ acres go to a staff quote.
-              </p>
-            </span>
-          </Link>
+      <section className="mx-auto grid w-full gap-4 px-6 py-20 sm:grid-cols-2 lg:px-12 xl:px-16">
+        {(
+          [
+            ["residential", "commercial", "hoa"],
+            ["events", "other", "golf"],
+          ] as PropertyTypeId[][]
+        ).map((column) => (
+          <div key={column.join("-")} className="grid gap-4">
+            {column.map((id) => {
+              const type = propertyTypes.find((item) => item.id === id);
+              if (!type) return null;
+              return (
+                <Link
+                  key={type.id}
+                  href={`/signup?propertyType=${type.id}`}
+                  className="group relative min-h-56 overflow-hidden border border-white/10 bg-cover bg-center p-8 text-white"
+                  style={{ backgroundImage: `url(${type.image})` }}
+                >
+                  <span className="absolute inset-0 bg-[#07101c]/55 transition-colors group-hover:bg-[#07101c]/35" />
+                  <span className="relative z-10 block">
+                    <h2 className="text-2xl font-semibold">{type.label}</h2>
+                    <p className="mt-3 text-sm leading-6 text-zinc-100">
+                      {type.id === "events"
+                        ? "Weddings, parties, and outdoor receptions. Quote for large venues."
+                        : "Under 5 acres books online. 5+ acres go to a staff quote."}
+                    </p>
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
         ))}
       </section>
     </main>

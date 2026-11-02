@@ -35,6 +35,11 @@ export const propertyTypes = [
     label: "Acreage",
     image: "/themes/acreage.jpg",
   },
+  {
+    id: "events",
+    label: "Special Events",
+    image: "/themes/special-events.jpg",
+  },
 ] as const;
 
 export type PropertyTypeId = (typeof propertyTypes)[number]["id"];
@@ -59,6 +64,7 @@ export const monthlyPricesCents: Record<
     golf: 24900,
     hoa: 17900,
     other: 9900,
+    events: 15900,
   },
   "0_5_1": {
     residential: 9900,
@@ -66,6 +72,7 @@ export const monthlyPricesCents: Record<
     golf: 34900,
     hoa: 22900,
     other: 12900,
+    events: 21900,
   },
   "1_5": {
     residential: 14900,
@@ -73,6 +80,7 @@ export const monthlyPricesCents: Record<
     golf: 49900,
     hoa: 29900,
     other: 19900,
+    events: 32900,
   },
 };
 

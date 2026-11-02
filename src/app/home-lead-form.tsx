@@ -25,8 +25,11 @@ export function HomeLeadForm() {
   return (
     <form
       onSubmit={onSubmit}
-      className="mt-10 grid w-full max-w-xl gap-3 rounded-sm border border-white/15 bg-[#0b1220]/80 p-5 backdrop-blur-sm sm:grid-cols-2"
+      className="grid w-full gap-3 rounded-sm border border-white/15 bg-[#1c2840]/80 p-5 backdrop-blur-sm sm:grid-cols-2 lg:p-8"
     >
+      <h2 className="sm:col-span-2 mb-1 text-2xl font-semibold tracking-tight text-white">
+        Check Your Pricing
+      </h2>
       <label className="flex flex-col gap-1 text-sm">
         First name
         <input
@@ -63,7 +66,7 @@ export function HomeLeadForm() {
           required
           value={acreageBand}
           onChange={(e) => setAcreageBand(e.target.value)}
-          className="border border-white/25 bg-[#0b1220] px-3 py-2 text-base text-white"
+          className="border border-white/25 bg-[#1c2840] px-3 py-2 text-base text-white"
         >
           <option value="" disabled>
             Select acreage

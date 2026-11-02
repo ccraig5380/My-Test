@@ -9,7 +9,7 @@ const nav = [
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-20 border-b border-white/10 bg-[#0b1220]/95 backdrop-blur-sm">
+    <header className="sticky top-0 z-20 border-b border-white/10 bg-[#1c2840]/95 backdrop-blur-sm">
       <div className="mx-auto flex w-full items-center justify-between gap-4 px-6 py-4 lg:px-12 xl:px-16">
         <Link href="/" className="leading-tight text-white">
           <span className="block text-xl font-semibold tracking-tight sm:text-2xl">
@@ -42,7 +42,7 @@ export function Header() {
 
 export function Footer() {
   return (
-    <footer className="border-t border-white/10 bg-[#07101c]">
+    <footer className="border-t border-white/10 bg-[#162338]">
       <div className="mx-auto flex w-full flex-col gap-3 px-6 py-10 text-sm text-zinc-400 sm:flex-row sm:justify-between lg:px-12 xl:px-16">
         <p>
           {business.name} · {business.city} · {business.phone}

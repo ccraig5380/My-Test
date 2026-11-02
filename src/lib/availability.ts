@@ -80,6 +80,7 @@ export function assertBookable(
     "golf",
     "hoa",
     "other",
+    "events",
   ];
   if (!types.includes(type as PropertyTypeId)) {
     throw new Error("Invalid property type");
