@@ -33,10 +33,10 @@ export default async function Home() {
   return (
     <main>
       <section className="relative flex min-h-[88vh] flex-col bg-[radial-gradient(ellipse_at_top,_#1a4b8c_0%,_#0b1220_55%,_#07101c_100%)] pb-20">
-        <div className="relative h-40 w-full shrink-0 overflow-x-clip sm:h-52">
+        <div className="relative h-20 w-full shrink-0 overflow-hidden sm:h-24">
           <HeaderSwarm />
         </div>
-        <div className="mx-auto w-full max-w-6xl px-6">
+        <div className="mx-auto w-full px-6 lg:px-12 xl:px-16">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-sky-200/80">
             {business.name} · {business.city}
           </p>
@@ -50,10 +50,10 @@ export default async function Home() {
           </p>
           <ul className="mt-8 flex max-w-2xl flex-col gap-3 text-base font-medium tracking-wide text-sky-100">
             {[
-              { prefix: "", strong: "NO BITE", suffix: " Guarantee" },
+              { prefix: "", strong: "Safe", suffix: " For Pets And Livestock" },
+              { prefix: "", strong: "No Bite", suffix: " Guarantee" },
               { prefix: "EPA ", strong: "Approved", suffix: "" },
-              { prefix: "", strong: "Safe", suffix: " for pets and livestock" },
-              { prefix: "", strong: "Licensed", suffix: " technicians" },
+              { prefix: "", strong: "Licensed", suffix: " Technicians" },
             ].map((item) => (
               <li key={item.strong} className="flex items-center gap-3">
                 <img
@@ -73,7 +73,7 @@ export default async function Home() {
         </div>
       </section>
       <ReviewsTicker reviews={reviews} />
-      <section className="mx-auto grid w-full max-w-6xl gap-4 px-6 py-20 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="mx-auto grid w-full gap-4 px-6 py-20 sm:grid-cols-2 lg:grid-cols-3 lg:px-12 xl:px-16">
         {propertyTypes.map((type) => (
           <Link
             key={type.id}

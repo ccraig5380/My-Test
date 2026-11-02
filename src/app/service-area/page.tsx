@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Service Area" };
 
 export default function ServiceAreaPage() {
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-6 py-16">
+    <main className="mx-auto flex w-full flex-col gap-6 px-6 py-16 lg:px-12 xl:px-16">
       <h1 className="text-3xl font-semibold tracking-tight">Service Area</h1>
       <p className="max-w-2xl text-zinc-300">
         Greater Houston in an even radius from the city: west through Katy,

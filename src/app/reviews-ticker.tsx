@@ -12,7 +12,7 @@ export function ReviewsTicker({ reviews }: { reviews: Review[] }) {
 
   return (
     <section className="border-y border-white/10 bg-[#07101c] py-10">
-      <div className="mx-auto mb-6 max-w-6xl px-6">
+      <div className="mx-auto mb-6 w-full px-6 lg:px-12 xl:px-16">
         <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-sky-200/80">
           Customer reviews
         </h2>

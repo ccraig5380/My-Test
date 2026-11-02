@@ -5,7 +5,7 @@ export const metadata: Metadata = { title: "About" };
 
 export default function AboutPage() {
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-16">
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-16 lg:px-12 xl:px-16">
       <h1 className="text-3xl font-semibold tracking-tight">About</h1>
       <p className="leading-7 text-zinc-300">
         {business.name} provides recurring mosquito barrier treatments in{" "}

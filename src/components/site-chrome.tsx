@@ -10,30 +10,30 @@ const nav = [
 export function Header() {
   return (
     <header className="sticky top-0 z-20 border-b border-white/10 bg-[#0b1220]/95 backdrop-blur-sm">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
+      <div className="mx-auto flex w-full items-center justify-between gap-4 px-6 py-4 lg:px-12 xl:px-16">
         <Link href="/" className="leading-tight text-white">
-            <span className="block text-lg font-semibold tracking-tight">
-              {business.name}
-            </span>
-            <span className="block text-xs uppercase tracking-[0.16em] text-sky-200/80">
-              {business.tagline}
-            </span>
+          <span className="block text-xl font-semibold tracking-tight sm:text-2xl">
+            {business.name}
+          </span>
+          <span className="block text-sm uppercase tracking-[0.16em] text-sky-200/80">
+            {business.tagline}
+          </span>
+        </Link>
+        <nav className="flex flex-wrap items-center gap-6 text-base text-zinc-200">
+          {nav.map((item) => (
+            <Link key={item.href} href={item.href} className="hover:text-white">
+              {item.label}
+            </Link>
+          ))}
+          <Link href="/account" className="hover:text-white">
+            Account
           </Link>
-          <nav className="flex flex-wrap items-center gap-5 text-sm text-zinc-200">
-            {nav.map((item) => (
-              <Link key={item.href} href={item.href} className="hover:text-white">
-                {item.label}
-              </Link>
-            ))}
-            <Link href="/account" className="hover:text-white">
-              Account
-            </Link>
-            <Link
-              href="/signup"
-              className="rounded-sm bg-[var(--accent)] px-4 py-2 font-semibold text-white hover:bg-[var(--accent-hover)]"
-            >
-              Book now
-            </Link>
+          <Link
+            href="/signup"
+            className="rounded-sm bg-[var(--accent)] px-5 py-2.5 font-semibold text-white hover:bg-[var(--accent-hover)]"
+          >
+            Book now
+          </Link>
         </nav>
       </div>
     </header>
@@ -43,7 +43,7 @@ export function Header() {
 export function Footer() {
   return (
     <footer className="border-t border-white/10 bg-[#07101c]">
-      <div className="mx-auto flex max-w-6xl flex-col gap-3 px-6 py-10 text-sm text-zinc-400 sm:flex-row sm:justify-between">
+      <div className="mx-auto flex w-full flex-col gap-3 px-6 py-10 text-sm text-zinc-400 sm:flex-row sm:justify-between lg:px-12 xl:px-16">
         <p>
           {business.name} · {business.city} · {business.phone}
         </p>

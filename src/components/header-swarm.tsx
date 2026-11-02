@@ -76,7 +76,7 @@ function spawn(
   height: number,
   fromEdge = false,
 ): Critter {
-  const size = kind === "bee" ? 36 + Math.random() * 14 : 40 + Math.random() * 16;
+  const size = kind === "bee" ? 34 + Math.random() * 10 : 36 + Math.random() * 12;
   const dir = Math.random() < 0.5 ? -1 : 1;
   const speed = 0.45 + Math.random() * 0.55;
   let x = Math.random() * Math.max(40, width - 40);
@@ -84,7 +84,7 @@ function spawn(
   return {
     kind,
     x,
-    y: 8 + Math.random() * Math.max(8, height - size - 10),
+    y: 4 + Math.random() * Math.max(4, height - size - 6),
     vx: dir * speed,
     vy: (Math.random() - 0.5) * 0.35,
     size,
@@ -184,7 +184,7 @@ export function HeaderSwarm() {
 
         bug.bob += bug.bobSpeed;
         bug.x += bug.vx;
-        bug.y += bug.vy + Math.sin(bug.bob) * 0.35;
+        bug.y += bug.vy + Math.sin(bug.bob) * 0.2;
         if (bug.y < 2 || bug.y > height - bug.size - 2) bug.vy *= -1;
         if (bug.x < -bug.size - 8) bug.x = width + bug.size;
         if (bug.x > width + bug.size + 8) bug.x = -bug.size;

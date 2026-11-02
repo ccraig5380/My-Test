@@ -8,7 +8,7 @@ export default function ServicesPage() {
   const bookable = acreageBands.filter((band) => !band.quoteOnly);
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 py-16">
+    <main className="mx-auto flex w-full flex-col gap-10 px-6 py-16 lg:px-12 xl:px-16">
       <h1 className="text-3xl font-semibold tracking-tight">Services and pricing</h1>
       <p className="max-w-2xl text-zinc-300">
         Choose a property type and acreage. Monthly prices below are starting
