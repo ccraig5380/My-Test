@@ -53,6 +53,35 @@ export const acreageBands = [
 
 export type AcreageBandId = (typeof acreageBands)[number]["id"];
 
+export const servicePlans = [
+  {
+    id: "recurring",
+    label: "Recurring",
+    detail: "Year-round, every 21 days, no end date.",
+  },
+  {
+    id: "three_month",
+    label: "3 month package",
+    detail: "21-day sprays for 90 days from the first visit.",
+  },
+  {
+    id: "summer",
+    label: "Summer package",
+    detail: "Every 21 days from April 1 through October 31.",
+  },
+  {
+    id: "single",
+    label: "Single service",
+    detail: "One visit. No follow-up sprays.",
+  },
+] as const;
+
+export type ServicePlanId = (typeof servicePlans)[number]["id"];
+
+export function isServicePlan(value: string): value is ServicePlanId {
+  return servicePlans.some((plan) => plan.id === value);
+}
+
 /** Monthly prices in cents. Replace before going live. */
 export const monthlyPricesCents: Record<
   Exclude<AcreageBandId, "5_plus">,

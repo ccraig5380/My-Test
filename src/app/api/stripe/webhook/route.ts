@@ -1,5 +1,7 @@
+import { isServicePlan } from "@/lib/business";
 import { getSql, logInteraction } from "@/lib/db";
 import { getStripe } from "@/lib/stripe";
+import { placeJobsForNewSubscription } from "@/lib/zip-routing";
 import type Stripe from "stripe";
 
 export async function POST(request: Request) {
@@ -40,21 +42,36 @@ export async function POST(request: Request) {
       `;
     }
     if (customerId && propertyId && stripeSub) {
+      const rawPlan = session.metadata?.planType ?? "";
+      const planType = isServicePlan(rawPlan) ? rawPlan : "recurring";
+      const zip = session.metadata?.zip ?? "";
+      const acreageBand = session.metadata?.acreageBand ?? "0_5_1";
       const sub = (await sql`
         insert into subscriptions (
-          customer_id, property_id, stripe_subscription_id, status
+          customer_id, property_id, stripe_subscription_id, status, plan_type
         ) values (
-          ${customerId}, ${propertyId}, ${stripeSub}, 'active'
+          ${customerId}, ${propertyId}, ${stripeSub}, 'active', ${planType}
         )
         returning id
       `) as { id: string }[];
-      await sql`
-        insert into jobs (
-          customer_id, property_id, subscription_id, status
-        ) values (
-          ${customerId}, ${propertyId}, ${sub[0].id}, 'needs_schedule'
-        )
-      `;
+      if (zip) {
+        await placeJobsForNewSubscription({
+          customerId,
+          propertyId,
+          subscriptionId: sub[0].id,
+          zip,
+          planType,
+          acreageBand,
+        });
+      } else {
+        await sql`
+          insert into jobs (
+            customer_id, property_id, subscription_id, status
+          ) values (
+            ${customerId}, ${propertyId}, ${sub[0].id}, 'needs_schedule'
+          )
+        `;
+      }
       await logInteraction({
         actor: "stripe",
         action: "checkout_completed",

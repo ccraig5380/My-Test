@@ -8,8 +8,10 @@ import {
   isCoveredZip,
   monthlyPricesCents,
   propertyTypes,
+  servicePlans,
   type AcreageBandId,
   type PropertyTypeId,
+  type ServicePlanId,
 } from "@/lib/business";
 
 function zipFromAddress(address: string) {
@@ -37,6 +39,7 @@ type SignupFields = {
   zip: string;
   notes: string;
   preferredDays: string;
+  planType: ServicePlanId;
 };
 
 export function SignupForm() {
@@ -57,6 +60,7 @@ export function SignupForm() {
       zip: zipFromAddress(address),
       notes: "",
       preferredDays: "",
+      planType: "recurring",
     };
   });
   const [status, setStatus] = useState<string | null>(null);
@@ -241,6 +245,34 @@ export function SignupForm() {
           />
         </label>
       </div>
+
+      {bookable ? (
+        <fieldset className="flex flex-col gap-3">
+          <legend className="text-lg font-semibold">Service plan</legend>
+          <div className="grid gap-2">
+            {servicePlans.map((plan) => (
+              <label
+                key={plan.id}
+                className="flex cursor-pointer items-start gap-3 border border-white/15 px-4 py-3"
+              >
+                <input
+                  type="radio"
+                  name="planType"
+                  checked={form.planType === plan.id}
+                  onChange={() => set("planType", plan.id)}
+                  className="mt-1"
+                />
+                <span>
+                  <span className="block font-semibold">{plan.label}</span>
+                  <span className="block text-sm text-zinc-400">
+                    {plan.detail}
+                  </span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      ) : null}
 
       {bookable ? (
         <label className="flex flex-col gap-2">

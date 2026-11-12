@@ -35,9 +35,6 @@ export function JobActions({
       <button type="button" className="underline" onClick={() => save(status)}>
         Assign
       </button>
-      <button type="button" className="underline" onClick={() => save("complete")}>
-        Done
-      </button>
       <button type="button" className="underline" onClick={() => save("rescheduled")}>
         Weather
       </button>

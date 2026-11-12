@@ -8,6 +8,7 @@ export function DriverForm() {
   const [name, setName] = useState("");
   const [zone, setZone] = useState("houston");
   const [maxJobsPerDay, setMaxJobsPerDay] = useState("8");
+  const [pin, setPin] = useState("");
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
@@ -18,9 +19,11 @@ export function DriverForm() {
         name,
         zone,
         maxJobsPerDay: Number(maxJobsPerDay),
+        pin,
       }),
     });
     setName("");
+    setPin("");
     router.refresh();
   }
 
@@ -45,6 +48,14 @@ export function DriverForm() {
         value={maxJobsPerDay}
         onChange={(e) => setMaxJobsPerDay(e.target.value)}
         className="w-20 border border-white/20 bg-transparent px-2 py-1"
+      />
+      <input
+        required
+        inputMode="numeric"
+        value={pin}
+        onChange={(e) => setPin(e.target.value)}
+        placeholder="PIN"
+        className="w-24 border border-white/20 bg-transparent px-2 py-1"
       />
       <button className="bg-[var(--accent)] px-3 py-1 text-sm font-semibold">
         Add driver

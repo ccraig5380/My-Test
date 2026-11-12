@@ -1,14 +1,13 @@
 import { connection } from "next/server";
 import { isAdmin } from "@/lib/admin-auth";
 import { getSql } from "@/lib/db";
-import { CustomerEdit } from "./customer-edit";
 import { DriverForm } from "./driver-form";
-import { JobActions } from "./job-actions";
 import { AdminLoginForm } from "./login-form";
 import { LogoutButton } from "./logout-button";
-import { QuoteActions } from "./quote-actions";
+import { OpsTable, type OpsRow } from "./ops-table";
+import { PromoForm, PromoRowActions } from "./promo-form";
 import { ReviewForm, ReviewRowActions } from "./review-form";
-import { ScheduleForm } from "./schedule-form";
+import { WeekCalendar, type CalendarJob } from "./week-calendar";
 
 export const instant = false;
 
@@ -19,7 +18,7 @@ export default async function AdminPage() {
       <main className="mx-auto max-w-lg px-6 py-16">
         <h1 className="mb-3 text-3xl font-semibold">Staff back office</h1>
         <p className="mb-6 text-sm text-zinc-400">
-          Sign in to manage quotes, customers, and the spray calendar.
+          Sign in to manage quotes, customers, promo codes, and the spray calendar.
         </p>
         <AdminLoginForm />
       </main>
@@ -27,61 +26,141 @@ export default async function AdminPage() {
   }
 
   const sql = getSql();
-  const quotes = (await sql`
-    select id, name, email, phone, address_line, zip, property_type,
-           acreage_exact, notes, status, created_at
-    from quote_requests
-    order by created_at desc
-    limit 50
-  `) as Record<string, string>[];
-  const customers = (await sql`
-    select c.id, c.name, c.email, c.phone, c.created_at,
-           p.address_line, p.zip, p.property_type, p.acreage_band,
-           s.status as subscription_status
-    from customers c
-    left join properties p on p.customer_id = c.id
-    left join subscriptions s on s.customer_id = c.id
-    order by c.created_at desc
-    limit 80
-  `) as Record<string, string>[];
   const drivers = (await sql`
     select id, name, zone, max_jobs_per_day, active
     from drivers
     where active = true
     order by name
   `) as { id: string; name: string; zone: string; max_jobs_per_day: number }[];
-  const needsSchedule = (await sql`
-    select j.id, c.name, c.phone, p.address_line, p.zip, p.preferred_days
-    from jobs j
-    join customers c on c.id = j.customer_id
-    join properties p on p.id = j.property_id
-    where j.status = 'needs_schedule'
-    order by j.created_at asc
-    limit 50
-  `) as Record<string, string>[];
-  const jobs = (await sql`
-    select j.id, j.starts_at, j.ends_at, j.status, j.tech_name,
-           c.name as customer_name, c.phone as customer_phone,
-           p.address_line, p.zip
-    from jobs j
-    join customers c on c.id = j.customer_id
-    join properties p on p.id = j.property_id
-    where j.starts_at > now() - interval '14 days'
-    order by j.starts_at asc
+  const household = (await sql`
+    select
+      c.id as customer_id,
+      c.name,
+      c.email,
+      c.phone,
+      p.address_line,
+      p.zip,
+      p.property_type,
+      p.acreage_band,
+      p.preferred_days,
+      s.id as subscription_id,
+      s.plan_type,
+      s.status as sub_status,
+      s.ends_on,
+      s.cancelled_at,
+      open_job.id as open_job_id,
+      open_job.status as job_status,
+      d.name as driver_name,
+      done.last_completed_at,
+      zr.weekday as zip_weekday
+    from customers c
+    left join properties p on p.customer_id = c.id
+    left join subscriptions s on s.customer_id = c.id and s.property_id = p.id
+    left join lateral (
+      select j.id, j.status, j.driver_id
+      from jobs j
+      where j.customer_id = c.id
+        and (p.id is null or j.property_id = p.id)
+        and j.completed_at is null
+      order by coalesce(j.starts_at, j.created_at) desc
+      limit 1
+    ) open_job on true
+    left join drivers d on d.id = open_job.driver_id
+    left join lateral (
+      select max(j.completed_at) as last_completed_at
+      from jobs j
+      where j.customer_id = c.id
+    ) done on true
+    left join zip_routes zr on zr.zip = p.zip
+    order by c.created_at desc
+    limit 200
+  `) as Record<string, string | number | boolean | null>[];
+  const quotes = (await sql`
+    select id, name, email, phone, address_line, zip, property_type,
+           acreage_exact, notes, status, created_at
+    from quote_requests
+    order by created_at desc
     limit 80
   `) as Record<string, string>[];
-  const interactions = (await sql`
-    select id, occurred_at, actor, action, entity_type, summary
-    from interactions
-    order by occurred_at desc
-    limit 50
-  `) as Record<string, string>[];
+  const jobs = (await sql`
+    select j.id, j.starts_at, j.status, j.kind, j.tech_name,
+           c.name as customer_name, c.phone as customer_phone,
+           p.address_line, p.zip, d.name as driver_name
+    from jobs j
+    join customers c on c.id = j.customer_id
+    join properties p on p.id = j.property_id
+    left join drivers d on d.id = j.driver_id
+    where j.starts_at is not null
+      and j.starts_at > now() - interval '7 days'
+      and j.starts_at < now() + interval '14 days'
+    order by j.starts_at asc
+    limit 200
+  `) as CalendarJob[];
   const reviews = (await sql`
     select id, author_name, location, body, rating, published, created_at
     from reviews
     order by created_at desc
     limit 50
   `) as Record<string, string | boolean | number>[];
+  const promos = (await sql`
+    select id, code, discount_kind, discount_value, max_redemptions,
+           times_redeemed, expires_at, duration_visits, season, active
+    from promo_codes
+    order by created_at desc
+    limit 80
+  `) as Record<string, string | boolean | number | null>[];
+
+  const opsRows: OpsRow[] = [
+    ...household.map((row) => ({
+      key: `c-${row.customer_id}-${row.subscription_id ?? "none"}`,
+      kind: "customer",
+      name: String(row.name ?? ""),
+      email: String(row.email ?? ""),
+      phone: String(row.phone ?? ""),
+      address: String(row.address_line ?? ""),
+      zip: String(row.zip ?? ""),
+      propertyType: String(row.property_type ?? ""),
+      acres: String(row.acreage_band ?? ""),
+      planType: String(row.plan_type ?? ""),
+      subStatus: String(row.sub_status ?? ""),
+      endsOn: row.ends_on ? String(row.ends_on).slice(0, 10) : "",
+      cancelled: Boolean(row.cancelled_at),
+      driverName: String(row.driver_name ?? ""),
+      jobStatus: String(row.job_status ?? ""),
+      openJobId: String(row.open_job_id ?? ""),
+      preferredDays: String(row.preferred_days ?? ""),
+      lastCompletedAt: row.last_completed_at
+        ? String(row.last_completed_at)
+        : "",
+      subscriptionId: String(row.subscription_id ?? ""),
+      quoteId: "",
+      zipWeekday:
+        row.zip_weekday == null ? null : Number(row.zip_weekday),
+    })),
+    ...quotes.map((quote) => ({
+      key: `q-${quote.id}`,
+      kind: "quote",
+      name: quote.name,
+      email: quote.email,
+      phone: quote.phone,
+      address: quote.address_line,
+      zip: quote.zip,
+      propertyType: quote.property_type,
+      acres: String(quote.acreage_exact ?? ""),
+      planType: "",
+      subStatus: quote.status,
+      endsOn: "",
+      cancelled: false,
+      driverName: "",
+      jobStatus: quote.status,
+      openJobId: "",
+      preferredDays: quote.notes ?? "",
+      lastCompletedAt: "",
+      subscriptionId: "",
+      quoteId: quote.id,
+      zipWeekday: null,
+    })),
+  ];
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-14 px-6 py-16">
@@ -89,11 +168,30 @@ export default async function AdminPage() {
         <div>
           <h1 className="text-4xl font-semibold">Staff back office</h1>
           <p className="mt-2 text-sm text-zinc-400">
-            Quotes, customer records, and the job calendar.
+            Ops table, ZIP calendar, promo codes, and reviews.
           </p>
         </div>
         <LogoutButton />
       </div>
+
+      <OpsTable rows={opsRows} drivers={drivers} />
+
+      <WeekCalendar jobs={jobs} />
+
+      <section>
+        <h2 className="mb-4 text-2xl font-semibold">Drivers</h2>
+        <ul className="mb-4 text-sm text-zinc-300">
+          {drivers.map((driver) => (
+            <li key={driver.id}>
+              {driver.name} · {driver.zone} · cap {driver.max_jobs_per_day}/day
+            </li>
+          ))}
+        </ul>
+        <DriverForm />
+        <p className="mt-3 text-sm text-zinc-400">
+          Crew phone site: /driver (PIN you set here).
+        </p>
+      </section>
 
       <section>
         <h2 className="mb-4 text-2xl font-semibold">Homepage reviews</h2>
@@ -138,205 +236,94 @@ export default async function AdminPage() {
       </section>
 
       <section>
-        <h2 className="mb-4 text-2xl font-semibold">Customers</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-white/15">
-                <th className="py-2 pr-3">Record</th>
-                <th className="py-2 pr-3">Property</th>
-                <th className="py-2 pr-3">Plan</th>
-                <th className="py-2 pr-3">Edit</th>
-              </tr>
-            </thead>
-            <tbody>
-              {customers.map((row) => (
-                <tr key={row.id} className="border-b border-white/10 align-top">
-                  <td className="py-3 pr-3">
-                    <div>{row.name}</div>
-                    <div className="text-zinc-400">{row.email}</div>
-                    <div className="text-zinc-400">{row.phone}</div>
-                  </td>
-                  <td className="py-3 pr-3">
-                    {row.address_line} {row.zip}
-                    <div className="text-zinc-400">{row.property_type}</div>
-                  </td>
-                  <td className="py-3 pr-3">
-                    {row.acreage_band}
-                    <div className="text-zinc-400">
-                      {row.subscription_status ?? "none"}
-                    </div>
-                  </td>
-                  <td className="py-3 pr-3">
-                    <CustomerEdit
-                      id={row.id}
-                      name={row.name}
-                      email={row.email}
-                      phone={row.phone}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section>
-        <h2 className="mb-4 text-2xl font-semibold">5+ acre quotes</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-white/15">
-                <th className="py-2 pr-3">When</th>
-                <th className="py-2 pr-3">Contact</th>
-                <th className="py-2 pr-3">Property</th>
-                <th className="py-2 pr-3">Acres</th>
-                <th className="py-2 pr-3">Status</th>
-                <th className="py-2 pr-3">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {quotes.map((quote) => (
-                <tr key={quote.id} className="border-b border-white/10 align-top">
-                  <td className="py-2 pr-3">
-                    {new Date(quote.created_at).toLocaleString("en-US", {
-                      timeZone: "America/Chicago",
-                    })}
-                  </td>
-                  <td className="py-2 pr-3">
-                    {quote.name}
-                    <div className="text-zinc-400">{quote.email}</div>
-                    <div className="text-zinc-400">{quote.phone}</div>
-                  </td>
-                  <td className="py-2 pr-3">
-                    {quote.address_line} {quote.zip}
-                    <div className="text-zinc-400">{quote.notes}</div>
-                  </td>
-                  <td className="py-2 pr-3">{quote.acreage_exact}</td>
-                  <td className="py-2 pr-3">{quote.status}</td>
-                  <td className="py-2 pr-3">
-                    <QuoteActions id={quote.id} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section>
-        <h2 className="mb-4 text-2xl font-semibold">Needs scheduling</h2>
-        <p className="mb-3 text-sm text-zinc-400">
-          Paid stops waiting for you to pick a day and driver. Later, turn on
-          AUTO_DISPATCH to auto-fill drivers by zone and daily cap.
+        <h2 className="mb-4 text-2xl font-semibold">Promo codes</h2>
+        <p className="mb-4 text-sm text-zinc-400">
+          Staff-only. Codes apply later at credit-card checkout, not on the
+          homepage or Book Service form.
         </p>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-white/15">
-                <th className="py-2 pr-3">Customer</th>
-                <th className="py-2 pr-3">Address</th>
-                <th className="py-2 pr-3">Put on calendar</th>
-              </tr>
-            </thead>
-            <tbody>
-              {needsSchedule.map((row) => (
-                <tr key={row.id} className="border-b border-white/10 align-top">
-                  <td className="py-2 pr-3">
-                    {row.name}
-                    <div className="text-zinc-400">{row.phone}</div>
-                  </td>
-                  <td className="py-2 pr-3">
-                    {row.address_line} {row.zip}
-                  </td>
-                  <td className="py-2 pr-3">
-                    <ScheduleForm
-                      jobId={row.id}
-                      preferredDays={row.preferred_days}
-                      drivers={drivers}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section>
-        <h2 className="mb-4 text-2xl font-semibold">Drivers</h2>
-        <ul className="mb-4 text-sm text-zinc-300">
-          {drivers.map((driver) => (
-            <li key={driver.id}>
-              {driver.name} · {driver.zone} · cap {driver.max_jobs_per_day}/day
-            </li>
-          ))}
-        </ul>
-        <DriverForm />
-      </section>
-
-      <section>
-        <h2 className="mb-4 text-2xl font-semibold">Job calendar</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-white/15">
-                <th className="py-2 pr-3">Start</th>
-                <th className="py-2 pr-3">Customer</th>
-                <th className="py-2 pr-3">Address</th>
-                <th className="py-2 pr-3">Status</th>
-                <th className="py-2 pr-3">Crew</th>
-              </tr>
-            </thead>
-            <tbody>
-              {jobs.map((job) => (
-                <tr key={job.id} className="border-b border-white/10">
-                  <td className="py-2 pr-3">
-                    {new Date(job.starts_at).toLocaleString("en-US", {
-                      timeZone: "America/Chicago",
-                    })}
-                  </td>
-                  <td className="py-2 pr-3">
-                    {job.customer_name}
-                    <div className="text-zinc-400">{job.customer_phone}</div>
-                  </td>
-                  <td className="py-2 pr-3">
-                    {job.address_line} {job.zip}
-                  </td>
-                  <td className="py-2 pr-3">{job.status}</td>
-                  <td className="py-2 pr-3">
-                    <JobActions
-                      id={job.id}
-                      status={job.status}
-                      tech={job.tech_name}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section>
-        <h2 className="mb-4 text-2xl font-semibold">Interaction log</h2>
-        <p className="mb-3 text-sm text-zinc-400">
-          Same rows live in Neon table <code>interactions</code>. Open them in
-          the Neon console without using this site.
-        </p>
-        <ul className="space-y-2 text-sm">
-          {interactions.map((row) => (
-            <li key={row.id} className="border border-white/10 px-3 py-2">
-              {new Date(row.occurred_at).toLocaleString("en-US", {
-                timeZone: "America/Chicago",
-              })}{" "}
-              · {row.actor} · {row.action} · {row.entity_type}
-              {row.summary ? ` · ${row.summary}` : ""}
+        <PromoForm />
+        <ul className="mt-6 space-y-3 text-sm">
+          {promos.map((promo) => (
+            <li
+              key={String(promo.id)}
+              className="flex flex-wrap items-start justify-between gap-3 border border-white/10 px-4 py-3"
+            >
+              <div>
+                <p className="font-semibold">
+                  {String(promo.code)}
+                  {!promo.active ? (
+                    <span className="ml-2 font-normal text-zinc-500">
+                      inactive
+                    </span>
+                  ) : null}
+                </p>
+                <p className="mt-1 text-zinc-300">
+                  {formatDiscount(promo.discount_kind, promo.discount_value)}
+                  {" · "}
+                  {formatUses(promo.max_redemptions, promo.times_redeemed)}
+                  {" · expires "}
+                  {formatDate(promo.expires_at)}
+                </p>
+                <p className="mt-1 text-zinc-400">
+                  {formatDuration(promo.duration_visits)}
+                  {" · "}
+                  {formatSeason(promo.season)}
+                </p>
+              </div>
+              <PromoRowActions
+                id={String(promo.id)}
+                active={Boolean(promo.active)}
+              />
             </li>
           ))}
         </ul>
       </section>
     </main>
   );
+}
+
+function formatDiscount(kind: unknown, value: unknown) {
+  const amount = Number(value);
+  if (kind === "percent") {
+    return `${amount}% off`;
+  }
+  return `$${amount.toFixed(2)} off`;
+}
+
+function formatUses(max: unknown, used: unknown) {
+  const redeemed = Number(used ?? 0);
+  if (max == null || max === "") {
+    return `${redeemed} used · unlimited until expiration`;
+  }
+  return `${redeemed} / ${Number(max)} uses`;
+}
+
+function formatDate(value: unknown) {
+  const raw = String(value ?? "");
+  if (!raw) {
+    return "—";
+  }
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) {
+    return raw.slice(0, 10);
+  }
+  return date.toLocaleDateString("en-US", { timeZone: "UTC" });
+}
+
+function formatDuration(visits: unknown) {
+  if (visits == null || visits === "") {
+    return "Unlimited visits";
+  }
+  const count = Number(visits);
+  return `First ${count} visit${count === 1 ? "" : "s"}`;
+}
+
+function formatSeason(season: unknown) {
+  if (season === "winter") {
+    return "Winter (Nov–Feb)";
+  }
+  if (season === "summer") {
+    return "Summer (May–Sep)";
+  }
+  return "Year-round";
 }

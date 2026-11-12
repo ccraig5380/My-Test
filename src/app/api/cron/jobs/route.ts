@@ -1,4 +1,5 @@
 import { getSql } from "@/lib/db";
+import { ensureNextRouteJobs } from "@/lib/zip-routing";
 
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
@@ -9,48 +10,7 @@ export async function GET(request: Request) {
   }
 
   const sql = getSql();
-  const subs = (await sql`
-    select s.id, s.customer_id, s.property_id, p.acreage_band
-    from subscriptions s
-    join properties p on p.id = s.property_id
-    where s.status = 'active'
-  `) as {
-    id: string;
-    customer_id: string;
-    property_id: string;
-    acreage_band: string;
-  }[];
-
-  let created = 0;
-  for (const sub of subs) {
-    const last = (await sql`
-      select starts_at, ends_at from jobs
-      where subscription_id = ${sub.id}
-      order by starts_at desc
-      limit 1
-    `) as { starts_at: string; ends_at: string }[];
-    if (!last[0]?.starts_at) continue;
-    const nextStart = new Date(last[0].starts_at);
-    nextStart.setUTCMonth(nextStart.getUTCMonth() + 1);
-    const nextEnd = new Date(last[0].ends_at);
-    nextEnd.setUTCMonth(nextEnd.getUTCMonth() + 1);
-    const exists = (await sql`
-      select id from jobs
-      where subscription_id = ${sub.id}
-        and starts_at = ${nextStart.toISOString()}
-      limit 1
-    `) as { id: string }[];
-    if (exists[0]) continue;
-    await sql`
-      insert into jobs (
-        customer_id, property_id, subscription_id, starts_at, ends_at, status
-      ) values (
-        ${sub.customer_id}, ${sub.property_id}, ${sub.id},
-        ${nextStart.toISOString()}, ${nextEnd.toISOString()}, 'scheduled'
-      )
-    `;
-    created += 1;
-  }
+  const created = await ensureNextRouteJobs();
 
   const due = (await sql`
     select j.id, c.email, c.name, j.starts_at

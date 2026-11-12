@@ -13,6 +13,12 @@ export async function POST(request: Request) {
   if (!body.id) {
     return Response.json({ error: "Missing id" }, { status: 400 });
   }
+  if (body.status === "complete" || body.status === "completed") {
+    return Response.json(
+      { error: "Only the driver phone site can mark a stop complete" },
+      { status: 400 },
+    );
+  }
   const sql = getSql();
   await sql`
     update jobs

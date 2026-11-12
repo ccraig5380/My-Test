@@ -9,17 +9,23 @@ export async function POST(request: Request) {
     name?: string;
     zone?: string;
     maxJobsPerDay?: number;
+    pin?: string;
   };
   if (!body.name?.trim()) {
     return Response.json({ error: "Name required" }, { status: 400 });
   }
+  const pin = body.pin?.replace(/\D/g, "") ?? "";
+  if (pin.length < 4) {
+    return Response.json({ error: "Give the driver a 4+ digit PIN" }, { status: 400 });
+  }
   const sql = getSql();
   await sql`
-    insert into drivers (name, zone, max_jobs_per_day)
+    insert into drivers (name, zone, max_jobs_per_day, pin)
     values (
       ${body.name.trim()},
       ${body.zone?.trim() || "houston"},
-      ${body.maxJobsPerDay ?? 8}
+      ${body.maxJobsPerDay ?? 8},
+      ${pin}
     )
   `;
   await logInteraction({

@@ -1,10 +1,13 @@
 import { assertBookable } from "@/lib/availability";
 import {
   isCoveredZip,
+  isServicePlan,
   type PropertyTypeId,
+  type ServicePlanId,
 } from "@/lib/business";
 import { getSql, logInteraction } from "@/lib/db";
 import { getStripe, priceFor } from "@/lib/stripe";
+import { placeJobsForNewSubscription } from "@/lib/zip-routing";
 
 export async function POST(request: Request) {
   const body = (await request.json()) as Record<string, string>;
@@ -16,6 +19,8 @@ export async function POST(request: Request) {
   const propertyType = body.propertyType as PropertyTypeId;
   const band = body.acreageBand;
   const preferredDays = body.preferredDays?.trim() ?? "";
+  const rawPlan = body.planType ?? "recurring";
+  const planType: ServicePlanId = isServicePlan(rawPlan) ? rawPlan : "recurring";
 
   if (!name || !email || !phone || !address || !zip) {
     return Response.json({ error: "Missing fields" }, { status: 400 });
@@ -60,14 +65,18 @@ export async function POST(request: Request) {
 
   if (!process.env.STRIPE_SECRET_KEY) {
     const sub = (await sql`
-      insert into subscriptions (customer_id, property_id, status)
-      values (${customerId}, ${property[0].id}, 'pending_payment')
+      insert into subscriptions (customer_id, property_id, status, plan_type)
+      values (${customerId}, ${property[0].id}, 'pending_payment', ${planType})
       returning id
     `) as { id: string }[];
-    await sql`
-      insert into jobs (customer_id, property_id, subscription_id, status)
-      values (${customerId}, ${property[0].id}, ${sub[0].id}, 'needs_schedule')
-    `;
+    await placeJobsForNewSubscription({
+      customerId,
+      propertyId: property[0].id,
+      subscriptionId: sub[0].id,
+      zip,
+      planType,
+      acreageBand: band,
+    });
     await logInteraction({
       actor: "customer",
       action: "service_request",
@@ -90,6 +99,9 @@ export async function POST(request: Request) {
     metadata: {
       customerId,
       propertyId: property[0].id,
+      planType,
+      acreageBand: band,
+      zip,
     },
   });
 
