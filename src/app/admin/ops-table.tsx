@@ -7,6 +7,7 @@ import { OpsRowActions } from "./ops-row-actions";
 export type OpsRow = {
   key: string;
   kind: string;
+  customerId: string;
   name: string;
   email: string;
   phone: string;
@@ -20,6 +21,8 @@ export type OpsRow = {
   cancelled: boolean;
   driverName: string;
   jobStatus: string;
+  jobKind: string;
+  jobStartsAt: string;
   openJobId: string;
   preferredDays: string;
   lastCompletedAt: string;
@@ -37,40 +40,43 @@ const presets = [
 
 type PresetId = (typeof presets)[number]["id"] | null;
 
-function uniqueValues(rows: OpsRow[], key: keyof OpsRow) {
-  return [...new Set(rows.map((row) => String(row[key] || "—")))].sort();
+const planLabels: Record<string, string> = {
+  recurring: "Recurring",
+  three_month: "3 month",
+  summer: "Summer",
+  single: "Single",
+};
+
+function kindLabel(kind: string) {
+  return kind === "quote" ? "5+ acre quote" : "Customer";
 }
 
-function ColumnFilter({
-  label,
-  values,
-  selected,
-  onChange,
-}: {
-  label: string;
-  values: string[];
-  selected: string[];
-  onChange: (next: string[]) => void;
-}) {
-  return (
-    <th className="py-2 pr-3 align-top">
-      <div className="mb-1">{label}</div>
-      <select
-        multiple
-        value={selected}
-        onChange={(event) =>
-          onChange([...event.target.selectedOptions].map((option) => option.value))
-        }
-        className="max-h-20 min-w-24 border border-white/20 bg-[#0b1220] px-1 py-1 text-xs"
-      >
-        {values.map((value) => (
-          <option key={value} value={value}>
-            {value}
-          </option>
-        ))}
-      </select>
-    </th>
-  );
+function planLabel(plan: string) {
+  if (!plan) return "none";
+  return planLabels[plan] ?? plan;
+}
+
+function jobLabel(row: OpsRow) {
+  if (row.kind === "quote") return row.jobStatus || "none";
+  if (!row.jobStatus) return "none";
+  if (row.jobStatus === "needs_schedule") return "Needs schedule";
+  if (row.jobKind === "kickoff" && !row.jobStartsAt) return "Kickoff due";
+  if (row.jobKind === "kickoff") return "Kickoff due";
+  if (row.jobStatus === "scheduled" || row.jobKind === "route") return "On route";
+  return row.jobStatus;
+}
+
+function daysSinceCompleted(iso: string) {
+  if (!iso) return null;
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return null;
+  return Math.floor((Date.now() - then) / 86400000);
+}
+
+function daysSinceLabel(iso: string) {
+  const days = daysSinceCompleted(iso);
+  if (days == null) return "—";
+  return String(days);
 }
 
 function remainingRouteDays(row: OpsRow) {
@@ -89,11 +95,51 @@ function remainingRouteDays(row: OpsRow) {
   return count;
 }
 
-function daysSinceCompleted(iso: string) {
-  if (!iso) return null;
-  const then = new Date(iso).getTime();
-  if (Number.isNaN(then)) return null;
-  return Math.floor((Date.now() - then) / 86400000);
+function uniqueValues(rows: OpsRow[], valueOf: (row: OpsRow) => string) {
+  return [...new Set(rows.map((row) => valueOf(row) || "—"))].sort();
+}
+
+function ColumnFilter({
+  label,
+  values,
+  selected,
+  onChange,
+}: {
+  label: string;
+  values: string[];
+  selected: string[];
+  onChange: (next: string[]) => void;
+}) {
+  function toggle(value: string) {
+    if (selected.includes(value)) {
+      onChange(selected.filter((item) => item !== value));
+      return;
+    }
+    onChange([...selected, value]);
+  }
+
+  return (
+    <th className="min-w-36 py-2 pr-3 align-top">
+      <details>
+        <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide">
+          {label}
+          {selected.length ? ` (${selected.length})` : ""}
+        </summary>
+        <div className="mt-2 flex max-h-40 flex-col gap-1 overflow-auto text-xs font-normal normal-case">
+          {values.map((value) => (
+            <label key={value} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={selected.includes(value)}
+                onChange={() => toggle(value)}
+              />
+              {value}
+            </label>
+          ))}
+        </div>
+      </details>
+    </th>
+  );
 }
 
 export function OpsTable({
@@ -110,6 +156,30 @@ export function OpsTable({
     setFilters((current) => ({ ...current, [column]: values }));
   }
 
+  function display(row: OpsRow) {
+    return {
+      kind: kindLabel(row.kind),
+      name: row.name || "—",
+      phone: row.phone || "—",
+      email: row.email || "—",
+      address: row.address || "—",
+      zip: row.zip || "—",
+      acres: row.acres || "—",
+      propertyType: row.propertyType || "—",
+      planType: planLabel(row.planType),
+      subStatus: row.cancelled ? "cancelled" : row.subStatus || "none",
+      driverName: row.driverName || "—",
+      jobStatus: jobLabel(row),
+      daysSince: daysSinceLabel(row.lastCompletedAt),
+      lastCompleted: row.lastCompletedAt
+        ? new Date(row.lastCompletedAt).toLocaleString("en-US", {
+            timeZone: "America/Chicago",
+          })
+        : "—",
+      endsOn: row.endsOn || "—",
+    };
+  }
+
   const visible = useMemo(() => {
     return rows.filter((row) => {
       if (preset === "cancelled") {
@@ -117,8 +187,11 @@ export function OpsTable({
       } else if (row.cancelled) {
         return false;
       }
-      if (preset === "schedule" && row.jobStatus !== "needs_schedule") {
-        return false;
+      if (preset === "schedule") {
+        const waiting =
+          row.jobStatus === "needs_schedule" ||
+          (row.jobKind === "kickoff" && !row.jobStartsAt);
+        if (!waiting) return false;
       }
       if (preset === "interaction") {
         if (row.kind !== "customer" || row.cancelled) return false;
@@ -133,22 +206,35 @@ export function OpsTable({
         const left = remainingRouteDays(row);
         if (left == null || left > 2) return false;
       }
-      const checks: [string, string][] = [
-        ["kind", row.kind],
-        ["name", row.name],
-        ["zip", row.zip],
-        ["planType", row.planType || "none"],
-        ["driverName", row.driverName || "—"],
-        ["jobStatus", row.jobStatus || "none"],
-        ["subStatus", row.subStatus || "none"],
-      ];
-      return checks.every(([column, value]) => {
-        const selected = filters[column];
+      const shown = display(row);
+      return Object.entries(filters).every(([column, selected]) => {
         if (!selected?.length) return true;
-        return selected.includes(value || "—");
+        const value = String(shown[column as keyof typeof shown] ?? "—");
+        return selected.includes(value);
       });
     });
   }, [filters, preset, rows]);
+
+  const columns: {
+    id: keyof ReturnType<typeof display>;
+    label: string;
+  }[] = [
+    { id: "kind", label: "Kind" },
+    { id: "name", label: "Name" },
+    { id: "phone", label: "Phone" },
+    { id: "email", label: "Email" },
+    { id: "address", label: "Address" },
+    { id: "zip", label: "ZIP" },
+    { id: "acres", label: "Acres" },
+    { id: "propertyType", label: "Property" },
+    { id: "planType", label: "Plan" },
+    { id: "subStatus", label: "Subscription" },
+    { id: "driverName", label: "Driver" },
+    { id: "jobStatus", label: "Job status" },
+    { id: "daysSince", label: "Days since last completed" },
+    { id: "lastCompleted", label: "Last completed service" },
+    { id: "endsOn", label: "End date" },
+  ];
 
   return (
     <section>
@@ -158,7 +244,9 @@ export function OpsTable({
           <button
             key={item.id}
             type="button"
-            onClick={() => setPreset((current) => (current === item.id ? null : item.id))}
+            onClick={() =>
+              setPreset((current) => (current === item.id ? null : item.id))
+            }
             className={`px-3 py-2 text-sm font-semibold ${
               preset === item.id
                 ? "bg-[var(--accent)] text-white"
@@ -170,97 +258,57 @@ export function OpsTable({
         ))}
       </div>
       <p className="mb-3 text-xs text-zinc-500">
-        Hold Ctrl (or Cmd) to choose multiple filter values in a column. Last
-        completed service changes only when a driver taps Complete on /driver.
+        Open a column heading and check one or more values. Last completed
+        service changes only when a driver taps Complete on /driver.
       </p>
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
+        <table className="w-max min-w-full text-left text-sm">
           <thead>
             <tr className="border-b border-white/15">
-              <ColumnFilter
-                label="Kind"
-                values={uniqueValues(rows, "kind")}
-                selected={filters.kind ?? []}
-                onChange={(values) => setFilter("kind", values)}
-              />
-              <ColumnFilter
-                label="Name"
-                values={uniqueValues(rows, "name")}
-                selected={filters.name ?? []}
-                onChange={(values) => setFilter("name", values)}
-              />
-              <ColumnFilter
-                label="ZIP"
-                values={uniqueValues(rows, "zip")}
-                selected={filters.zip ?? []}
-                onChange={(values) => setFilter("zip", values)}
-              />
-              <ColumnFilter
-                label="Plan"
-                values={uniqueValues(rows, "planType")}
-                selected={filters.planType ?? []}
-                onChange={(values) => setFilter("planType", values)}
-              />
-              <ColumnFilter
-                label="Driver"
-                values={uniqueValues(rows, "driverName")}
-                selected={filters.driverName ?? []}
-                onChange={(values) => setFilter("driverName", values)}
-              />
-              <ColumnFilter
-                label="Job"
-                values={uniqueValues(rows, "jobStatus")}
-                selected={filters.jobStatus ?? []}
-                onChange={(values) => setFilter("jobStatus", values)}
-              />
-              <th className="py-2 pr-3">Last completed service</th>
-              <th className="py-2 pr-3">End</th>
+              {columns.map((column) => (
+                <ColumnFilter
+                  key={column.id}
+                  label={column.label}
+                  values={uniqueValues(rows, (row) => display(row)[column.id])}
+                  selected={filters[column.id] ?? []}
+                  onChange={(values) => setFilter(column.id, values)}
+                />
+              ))}
               <th className="py-2 pr-3">Actions</th>
             </tr>
           </thead>
           <tbody>
+            {visible.length === 0 ? (
+              <tr>
+                <td className="py-6 text-zinc-400" colSpan={columns.length + 1}>
+                  No rows for this filter.
+                </td>
+              </tr>
+            ) : null}
             {visible.map((row) => {
-              const days = daysSinceCompleted(row.lastCompletedAt);
+              const shown = display(row);
               return (
                 <tr key={row.key} className="border-b border-white/10 align-top">
-                  <td className="py-3 pr-3">{row.kind}</td>
-                  <td className="py-3 pr-3">
-                    <div>{row.name}</div>
-                    <div className="text-zinc-400">{row.phone}</div>
-                    <div className="text-zinc-400">{row.email}</div>
-                    <div className="text-zinc-400">
-                      {row.address} {row.zip}
-                    </div>
-                  </td>
-                  <td className="py-3 pr-3">{row.zip}</td>
-                  <td className="py-3 pr-3">
-                    {row.planType || "none"}
-                    <div className="text-zinc-400">
-                      {row.acres} {row.propertyType}
-                    </div>
-                    <div className="text-zinc-400">{row.subStatus || "none"}</div>
-                  </td>
-                  <td className="py-3 pr-3">{row.driverName || "—"}</td>
-                  <td className="py-3 pr-3">{row.jobStatus || "none"}</td>
-                  <td className="py-3 pr-3">
-                    {row.lastCompletedAt
-                      ? new Date(row.lastCompletedAt).toLocaleString("en-US", {
-                          timeZone: "America/Chicago",
-                        })
-                      : "—"}
-                    {days != null ? (
-                      <div className="text-zinc-400">{days} days ago</div>
-                    ) : null}
-                  </td>
-                  <td className="py-3 pr-3">{row.endsOn || "—"}</td>
+                  {columns.map((column) => (
+                    <td key={column.id} className="py-3 pr-3">
+                      {shown[column.id]}
+                    </td>
+                  ))}
                   <td className="py-3 pr-3">
                     <OpsRowActions
+                      customerId={row.customerId || null}
+                      name={row.name}
+                      email={row.email}
+                      phone={row.phone}
                       quoteId={row.quoteId || null}
                       subscriptionId={row.subscriptionId || null}
                       planType={row.planType}
                       cancelled={row.cancelled}
                       openJobId={
-                        row.jobStatus === "needs_schedule" ? row.openJobId : null
+                        row.jobStatus === "needs_schedule" ||
+                        (row.jobKind === "kickoff" && !row.jobStartsAt)
+                          ? row.openJobId
+                          : null
                       }
                       preferredDays={row.preferredDays}
                       drivers={drivers}

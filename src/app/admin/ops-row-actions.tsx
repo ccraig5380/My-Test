@@ -1,10 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { CustomerEdit } from "./customer-edit";
 import { QuoteActions } from "./quote-actions";
 import { ScheduleForm } from "./schedule-form";
 
 export function OpsRowActions({
+  customerId,
+  name,
+  email,
+  phone,
   quoteId,
   subscriptionId,
   planType,
@@ -13,6 +18,10 @@ export function OpsRowActions({
   preferredDays,
   drivers,
 }: {
+  customerId?: string | null;
+  name?: string;
+  email?: string;
+  phone?: string;
   quoteId?: string | null;
   subscriptionId?: string | null;
   planType?: string | null;
@@ -35,6 +44,14 @@ export function OpsRowActions({
 
   return (
     <div className="flex flex-col gap-2 text-sm">
+      {customerId ? (
+        <CustomerEdit
+          id={customerId}
+          name={name ?? ""}
+          email={email ?? ""}
+          phone={phone ?? ""}
+        />
+      ) : null}
       {quoteId ? <QuoteActions id={quoteId} /> : null}
       {openJobId ? (
         <ScheduleForm

@@ -50,6 +50,8 @@ export default async function AdminPage() {
       s.cancelled_at,
       open_job.id as open_job_id,
       open_job.status as job_status,
+      open_job.kind as job_kind,
+      open_job.starts_at as job_starts_at,
       d.name as driver_name,
       done.last_completed_at,
       zr.weekday as zip_weekday
@@ -57,7 +59,7 @@ export default async function AdminPage() {
     left join properties p on p.customer_id = c.id
     left join subscriptions s on s.customer_id = c.id and s.property_id = p.id
     left join lateral (
-      select j.id, j.status, j.driver_id
+      select j.id, j.status, j.driver_id, j.kind, j.starts_at
       from jobs j
       where j.customer_id = c.id
         and (p.id is null or j.property_id = p.id)
@@ -114,6 +116,7 @@ export default async function AdminPage() {
     ...household.map((row) => ({
       key: `c-${row.customer_id}-${row.subscription_id ?? "none"}`,
       kind: "customer",
+      customerId: String(row.customer_id ?? ""),
       name: String(row.name ?? ""),
       email: String(row.email ?? ""),
       phone: String(row.phone ?? ""),
@@ -127,6 +130,8 @@ export default async function AdminPage() {
       cancelled: Boolean(row.cancelled_at),
       driverName: String(row.driver_name ?? ""),
       jobStatus: String(row.job_status ?? ""),
+      jobKind: String(row.job_kind ?? ""),
+      jobStartsAt: String(row.job_starts_at ?? ""),
       openJobId: String(row.open_job_id ?? ""),
       preferredDays: String(row.preferred_days ?? ""),
       lastCompletedAt: row.last_completed_at
@@ -140,6 +145,7 @@ export default async function AdminPage() {
     ...quotes.map((quote) => ({
       key: `q-${quote.id}`,
       kind: "quote",
+      customerId: "",
       name: quote.name,
       email: quote.email,
       phone: quote.phone,
@@ -153,6 +159,8 @@ export default async function AdminPage() {
       cancelled: false,
       driverName: "",
       jobStatus: quote.status,
+      jobKind: "",
+      jobStartsAt: "",
       openJobId: "",
       preferredDays: quote.notes ?? "",
       lastCompletedAt: "",
@@ -163,7 +171,7 @@ export default async function AdminPage() {
   ];
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-14 px-6 py-16">
+    <main className="mx-auto flex w-full max-w-[1600px] flex-col gap-14 px-6 py-16">
       <div className="flex items-end justify-between gap-4">
         <div>
           <h1 className="text-4xl font-semibold">Staff back office</h1>
